@@ -8,6 +8,9 @@ const inter = Inter({ subsets: ['latin', 'vietnamese'] });
 export const metadata: Metadata = {
   title: 'MENU SIMONE TG1',
   description: 'Hệ thống theo dõi thực đơn nhà ăn công ty, hiển thị ca sáng và ca chiều, món mặn và món chay theo chu kỳ tuần 1-3 và tuần 2-4.',
+  icons: {
+    icon: '/icon.png',
+  },
 };
 
 export default function RootLayout({

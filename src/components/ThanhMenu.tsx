@@ -13,20 +13,24 @@ export default function ThanhMenu() {
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo & Corporate Title */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-8 h-8 sm:w-9 sm:h-9 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-800 p-1 flex items-center justify-center">
-              <img src="/icon.png" alt="Simone Logo" className="w-full h-full object-contain" />
+            <div className="h-9 sm:h-10 w-auto min-w-[36px] max-w-[180px] rounded-xl overflow-hidden shrink-0 border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-2xs">
+              <img 
+                src="/icon.png" 
+                alt="Simone Logo" 
+                className="h-full w-auto max-w-full object-contain" 
+              />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-bold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight uppercase">
+                <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight uppercase">
                   SIMONE TG1
                 </span>
-                <span className="hidden sm:inline-block text-[10px] font-semibold px-2 py-0.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700">
+                <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FEF0D6] dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
                   CANTEEN PORTAL
                 </span>
               </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block">
-                Hệ thống quản lý và tra cứu thực đơn nhà ăn
+              <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block font-medium">
+                Hệ thống tra cứu & quản lý thực đơn nhà ăn
               </span>
             </div>
           </Link>

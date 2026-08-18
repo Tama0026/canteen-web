@@ -132,8 +132,10 @@ export default function DkChay() {
   }, [hiddenIds, hiddenNames, isLoaded]);
 
   const openAddModal = () => {
-    setIdInput('');
-    setNameInput('');
+    const savedId = typeof window !== 'undefined' ? (localStorage.getItem('canteen_last_user_id') || '') : '';
+    const savedName = typeof window !== 'undefined' ? (localStorage.getItem('canteen_last_user_name') || '') : '';
+    setIdInput(savedId);
+    setNameInput(savedName);
     setIsLunch(false);
     setIsDinner(false);
     setEditingIndex(null);
@@ -174,14 +176,17 @@ export default function DkChay() {
 
     const res = await upsertDkChayAction(newReg);
     if (res.success) {
+      // Lưu lại MSNV và Tên vào localStorage để tự động điền các lần sau
+      if (typeof window !== 'undefined') {
+        localStorage.setItem('canteen_last_user_id', newReg.id);
+        localStorage.setItem('canteen_last_user_name', newReg.name);
+      }
       setStatusMessage({ type: 'success', text: editingIndex !== null ? 'Sửa thành công' : 'Đăng ký thành công' });
       await loadData();
     } else {
       setStatusMessage({ type: 'error', text: 'Lỗi khi lưu dữ liệu' });
     }
     
-    setIdInput('');
-    setNameInput('');
     setIsModalOpen(false);
     setEditingIndex(null);
   };
