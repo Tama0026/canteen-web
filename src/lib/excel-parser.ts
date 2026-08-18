@@ -12,52 +12,90 @@ export function parseMenuExcel(buffer: ArrayBuffer | Buffer): FullMenuDatabase {
   const result: FullMenuDatabase = JSON.parse(JSON.stringify(INITIAL_MENU_DATABASE));
   result.lastUpdated = new Date().toISOString();
 
-  function parseSheet(sheetName: string, cycleKey: 'cycle_1_3' | 'cycle_2_4') {
+  function parseSheet(sheetName: string, cycleKey: 'cycle_1_3' | 'cycle_2_4'): boolean {
     const ws = workbook.Sheets[sheetName];
-    if (!ws) return;
+    if (!ws) return false;
 
-    // Chuyển sheet sang dạng mảng 2 chiều (rows x cols)
     const data: any[][] = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
 
-    // Cấu hình các hàng:
-    // Ca Sáng - Mặn: hàng 2 (chính 1), 3 (chính 2), 4 (xào), 5 (canh), 6 (tráng miệng) -> index 1, 2, 3, 4, 5
-    // Ca Sáng - Chay: hàng 11 (chính 1), 12 (chính 2), 13 (xào), 14 (canh), 15 (tráng miệng) -> index 10, 11, 12, 13, 14
-    // Ca Chiều - Mặn: hàng 20 (chính 1), 21 (chính 2), 22 (xào), 23 (canh), 24 (tráng miệng) -> index 19, 20, 21, 22, 23
-    // Ca Chiều - Chay: hàng 29 (chính 1), 30 (chính 2), 31 (xào), 32 (canh), 33 (tráng miệng) -> index 28, 29, 30, 31, 32
+    let currentShift: 'morning' | 'afternoon' | null = null;
+    let currentMealType: 'regular' | 'vegetarian' | null = null;
+    let dataRowIndex = -1; // -1 means we are not currently reading dish rows
+    let hasValidData = false;
 
-    const sections = [
-      { shift: 'morning', mealType: 'regular', r1: 1, r2: 2, rSide: 3, rSoup: 4, rDes: 5 },
-      { shift: 'morning', mealType: 'vegetarian', r1: 10, r2: 11, rSide: 12, rSoup: 13, rDes: 14 },
-      { shift: 'afternoon', mealType: 'regular', r1: 19, r2: 20, rSide: 21, rSoup: 22, rDes: 23 },
-      { shift: 'afternoon', mealType: 'vegetarian', r1: 28, r2: 29, rSide: 30, rSoup: 31, rDes: 32 },
-    ] as const;
+    for (let r = 0; r < data.length; r++) {
+      const row = data[r] || [];
 
-    for (const sec of sections) {
-      DAY_COLS.forEach((dayKey, idx) => {
-        const colIdx = idx + 3; // Cột D (index 3) là Thứ 2, E (4) là Thứ 3,...
-        
-        const m1 = data[sec.r1]?.[colIdx] ?? '';
-        const m2 = data[sec.r2]?.[colIdx] ?? '';
-        const side = data[sec.rSide]?.[colIdx] ?? '';
-        const soup = data[sec.rSoup]?.[colIdx] ?? '';
-        const des = data[sec.rDes]?.[colIdx] ?? '';
+      const colA = String(row[0] || '').trim().toUpperCase();
+      const colB = String(row[1] || '').trim().toUpperCase();
+      const colC = String(row[2] || '').trim().toUpperCase();
+      const headerStr = `${colA} ${colB} ${colC}`;
 
-        result[cycleKey][sec.shift][sec.mealType][dayKey] = {
-          mainDish1: String(m1).trim(),
-          mainDish2: String(m2).trim(),
-          sideDish: String(side).trim(),
-          soup: String(soup).trim(),
-          dessert: String(des).trim(),
-        };
-      });
+      // Detect Header Row (THỨ 2)
+      const isHeaderRow = String(row[3] || '').trim().toUpperCase().includes('THỨ 2');
+
+      // Update Meal Type
+      if (headerStr.includes('MẶN')) {
+        currentMealType = 'regular';
+      } else if (headerStr.includes('CHAY')) {
+        currentMealType = 'vegetarian';
+      }
+
+      // Update Shift and start counting
+      let isBlockStart = false;
+      if (headerStr.includes('SÁNG')) {
+        currentShift = 'morning';
+        isBlockStart = true;
+      } else if (headerStr.includes('CHIỀU')) {
+        currentShift = 'afternoon';
+        isBlockStart = true;
+      }
+
+      if (isHeaderRow) {
+        dataRowIndex = -1; // Wait for the shift marker
+        continue;
+      }
+
+      if (isBlockStart) {
+        dataRowIndex = 0; // This row itself is the first dish row (mainDish1)
+      } else if (dataRowIndex >= 0) {
+        dataRowIndex++; // Increment for subsequent rows
+      }
+
+      if (currentShift && currentMealType && dataRowIndex >= 0 && dataRowIndex <= 4) {
+        let dishType: 'mainDish1' | 'mainDish2' | 'sideDish' | 'soup' | 'dessert' | null = null;
+        if (dataRowIndex === 0) dishType = 'mainDish1';
+        else if (dataRowIndex === 1) dishType = 'mainDish2';
+        else if (dataRowIndex === 2) dishType = 'sideDish';
+        else if (dataRowIndex === 3) dishType = 'soup';
+        else if (dataRowIndex === 4) dishType = 'dessert';
+
+        if (dishType) {
+          DAY_COLS.forEach((dayKey, idx) => {
+            const colIdx = idx + 3; // Col D is index 3
+            const cellVal = String(row[colIdx] || '').trim();
+            // Allow empty string to overwrite if it's an update
+            result[cycleKey][currentShift!][currentMealType!][dayKey][dishType!] = cellVal;
+            if (cellVal) hasValidData = true;
+          });
+        }
+      }
     }
+    return hasValidData;
   }
 
-  if (workbook.SheetNames.includes('TUẦN 1 - 3')) {
-    parseSheet('TUẦN 1 - 3', 'cycle_1_3');
-  }
-  if (workbook.SheetNames.includes('TUẦN 2 - 4')) {
-    parseSheet('TUẦN 2 - 4', 'cycle_2_4');
+  let parsedSheets = 0;
+  workbook.SheetNames.forEach(name => {
+    const norm = name.toUpperCase().replace(/\s+/g, '');
+    if (norm.includes('1-3')) {
+      if (parseSheet(name, 'cycle_1_3')) parsedSheets++;
+    } else if (norm.includes('2-4')) {
+      if (parseSheet(name, 'cycle_2_4')) parsedSheets++;
+    }
+  });
+
+  if (parsedSheets === 0) {
+    throw new Error('Không thể đọc dữ liệu. Đảm bảo file có sheet "TUẦN 1 - 3" hoặc "TUẦN 2 - 4" và đúng định dạng.');
   }
 
   return result;

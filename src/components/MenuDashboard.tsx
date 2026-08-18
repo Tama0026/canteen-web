@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { 
   FullMenuDatabase, 
   DayKey, 
@@ -28,6 +28,7 @@ import {
   Filter
 } from 'lucide-react';
 
+
 interface MenuDashboardProps {
   initialMenu: FullMenuDatabase;
 }
@@ -35,7 +36,13 @@ interface MenuDashboardProps {
 export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
   const dateInfo = getCurrentDateInfo();
 
-  // State
+  const todayLabel = useMemo(() => {
+    const now = new Date();
+    const d = now.getDate();
+    const m = now.getMonth() + 1;
+    return `${d}/${m}`;
+  }, []);
+
   const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(dateInfo.weekNumber);
   const [selectedShift, setSelectedShift] = useState<ShiftKey>('morning');
   const [selectedMealType, setSelectedMealType] = useState<MealTypeKey | 'both'>('both');
@@ -45,10 +52,13 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
 
   const cycleKey = getCycleForWeek(selectedWeek);
 
-  // Search Results Filtering
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return null;
-    const query = searchQuery.toLowerCase().trim();
+    
+    const normalizeStr = (str: string) => 
+      str ? str.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().trim() : '';
+
+    const query = normalizeStr(searchQuery);
     const results: Array<{
       week: WeekNumber;
       cycleKey: string;
@@ -75,8 +85,8 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               if (!name) return;
               const effective = getEffectiveDish(name, w);
               if (
-                name.toLowerCase().includes(query) ||
-                effective.name.toLowerCase().includes(query)
+                normalizeStr(name).includes(query) ||
+                normalizeStr(effective.name).includes(query)
               ) {
                 results.push({
                   week: w,
@@ -103,163 +113,62 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
     return results;
   }, [searchQuery, initialMenu]);
 
+  useEffect(() => {
+    if (searchResults && searchResults.length > 0) {
+      const first = searchResults[0];
+      setSelectedWeek(first.week);
+      setSelectedShift(first.shift);
+      setSelectedDay(first.dayKey);
+      setViewMode('today');
+    }
+  }, [searchResults]);
+
   return (
     <div className="space-y-6 sm:space-y-8">
-      {/* Top Banner & Fast Controls */}
-      <div className="relative overflow-hidden rounded-3xl bg-gradient-to-r from-slate-900 via-indigo-950 to-slate-900 text-white p-6 sm:p-8 shadow-xl border border-slate-800">
-        <div className="relative z-10 flex flex-col md:flex-row md:items-center md:justify-between gap-6">
-          <div>
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/10 backdrop-blur-md text-xs font-semibold text-amber-300 mb-3 border border-white/10">
-              <ChefHat className="w-3.5 h-3.5" />
-              <span>Hệ Thống Thực Đơn Thông Minh</span>
-            </div>
-            <h1 className="text-2xl sm:text-4xl font-extrabold tracking-tight">
-              Lịch Nhà Ăn Tuần & Ca Bữa
-            </h1>
-            <p className="mt-2 text-sm sm:text-base text-slate-300 max-w-xl">
-              Theo dõi lịch phục vụ ca sáng và ca chiều, món mặn và món chay. Tự động xen kẽ thực đơn Tuần 1-3 & Tuần 2-4.
-            </p>
-          </div>
-
-          {/* Quick Search */}
-          <div className="w-full md:w-80">
-            <label className="block text-xs font-medium text-slate-300 mb-1.5 flex items-center gap-1.5">
-              <Search className="w-3.5 h-3.5 text-amber-400" />
-              <span>Tìm kiếm món ăn nhanh</span>
-            </label>
-            <div className="relative">
-              <input
-                type="text"
-                placeholder="Ví dụ: cá sapa, sườn, đùi gà..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2.5 rounded-2xl bg-white/10 backdrop-blur-md border border-white/20 text-white placeholder-slate-400 text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 focus:bg-white/15 transition-all"
-              />
-              <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-3" />
-              {searchQuery && (
-                <button
-                  onClick={() => setSearchQuery('')}
-                  className="absolute right-3 top-2.5 text-xs text-slate-300 hover:text-white bg-white/10 px-2 py-0.5 rounded-md"
-                >
-                  Xóa
-                </button>
-              )}
-            </div>
-          </div>
-        </div>
-
-        {/* Decorative background glow */}
-        <div className="absolute -right-10 -bottom-10 w-64 h-64 bg-amber-500/10 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute -left-10 -top-10 w-64 h-64 bg-indigo-500/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="pb-4 border-b border-slate-200 dark:border-slate-800">
+        <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+          THỰC ĐƠN ĂN TRƯA VÀ ĂN CHIỀU
+        </h1>
       </div>
 
-      {/* Search Results Display (if searching) */}
-      {searchQuery && searchResults && (
-        <div className="p-5 rounded-2xl bg-amber-500/10 border border-amber-500/20 text-slate-900 dark:text-white space-y-3">
-          <div className="flex items-center justify-between">
-            <h3 className="font-bold text-sm sm:text-base flex items-center gap-2 text-amber-700 dark:text-amber-400">
-              <Search className="w-4 h-4" />
-              Tìm thấy {searchResults.length} kết quả cho &quot;{searchQuery}&quot;
-            </h3>
-            <button
-              onClick={() => setSearchQuery('')}
-              className="text-xs text-slate-500 hover:text-slate-800 underline"
-            >
-              Đóng tìm kiếm
-            </button>
-          </div>
-
-          {searchResults.length === 0 ? (
-            <p className="text-sm text-slate-500">Không tìm thấy món ăn nào khớp với từ khóa.</p>
-          ) : (
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-              {searchResults.slice(0, 9).map((res, i) => (
-                <div
-                  key={i}
-                  onClick={() => {
-                    setSelectedWeek(res.week);
-                    setSelectedShift(res.shift);
-                    setSelectedDay(res.dayKey);
-                    setSelectedMealType(res.mealType);
-                    setViewMode('today');
-                    setSearchQuery('');
-                  }}
-                  className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all text-xs space-y-1"
-                >
-                  <div className="flex items-center justify-between text-slate-400">
-                    <span className="font-semibold text-slate-900 dark:text-white">
-                      {DAY_NAMES[res.dayKey].vi} • Tuần {res.week}
-                    </span>
-                    <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
-                      res.mealType === 'vegetarian' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
-                    }`}>
-                      {res.mealType === 'vegetarian' ? 'Chay' : 'Mặn'}
-                    </span>
-                  </div>
-                  <p className="font-bold text-sm text-slate-800 dark:text-slate-100 capitalize">
-                    {res.dishName}
-                  </p>
-                  <div className="text-[11px] text-slate-400 flex items-center justify-between">
-                    <span>{SHIFT_NAMES[res.shift].vi}</span>
-                    <span className="text-indigo-600 dark:text-indigo-400 font-medium">Bấm để xem →</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Main Filter & Navigation Bar */}
       <div className="bg-white dark:bg-slate-900 p-4 sm:p-5 rounded-3xl border border-slate-200 dark:border-slate-800 shadow-sm space-y-4">
-        {/* Row 1: Week Selector & View Mode Switch */}
+
         <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          {/* Week Selector */}
           <div>
-            <span className="block text-xs font-semibold uppercase text-slate-400 mb-2 flex items-center gap-1.5">
-              <Calendar className="w-3.5 h-3.5 text-indigo-500" />
+            <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
               Chọn Tuần Trong Tháng
             </span>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+            <div className="flex flex-wrap gap-2 sm:gap-3">
               {([1, 2, 3, 4] as WeekNumber[]).map((w) => {
                 const isSelected = selectedWeek === w;
                 const isCurrent = dateInfo.weekNumber === w;
-                const cycle = getCycleForWeek(w);
-                const cycleLabel = cycle === 'cycle_1_3' ? 'Chu kỳ 1-3' : 'Chu kỳ 2-4';
 
                 return (
                   <button
                     key={w}
                     onClick={() => setSelectedWeek(w)}
-                    className={`relative px-4 py-2.5 rounded-2xl font-bold text-xs sm:text-sm text-left transition-all ${
+                    className={`relative flex-1 min-w-[100px] sm:min-w-[140px] pt-3.5 pb-8 px-4 rounded-2xl text-xs sm:text-sm text-center transition-all ${
                       isSelected
-                        ? 'bg-gradient-to-r from-indigo-600 to-violet-600 text-white shadow-md shadow-indigo-500/25 scale-[1.02]'
-                        : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700'
+                        ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25 scale-[1.02] font-extrabold'
+                        : 'bg-slate-50 hover:bg-slate-100 dark:bg-slate-800/80 dark:hover:bg-slate-800 text-slate-700 dark:text-slate-200 border border-slate-200/60 dark:border-slate-700 font-medium'
                     }`}
                   >
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-center">
                       <span>Tuần {w}</span>
-                      {isCurrent && (
-                        <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-semibold ${
-                          isSelected ? 'bg-white/20 text-white' : 'bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300'
-                        }`}>
-                          Hiện tại
-                        </span>
-                      )}
                     </div>
-                    <span className={`text-[10px] block font-normal opacity-80 ${isSelected ? 'text-indigo-100' : 'text-slate-400'}`}>
-                      {cycleLabel}
-                    </span>
+                    {isCurrent && (
+                      <span className={`absolute bottom-1.5 right-2 text-[13px] sm:text-[15px] font-extrabold tracking-wide ${isSelected ? 'text-white' : 'text-slate-500/80 dark:text-slate-400/80'}`}>
+                        {todayLabel}
+                      </span>
+                    )}
                   </button>
                 );
               })}
             </div>
           </div>
 
-          {/* View Mode (Hôm nay / Cả tuần) */}
           <div className="lg:border-l lg:border-slate-200 dark:lg:border-slate-800 lg:pl-6">
-            <span className="block text-xs font-semibold uppercase text-slate-400 mb-2 flex items-center gap-1.5">
-              <Layers className="w-3.5 h-3.5 text-blue-500" />
+            <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-2 flex items-center gap-1.5">
               Chế độ hiển thị
             </span>
             <div className="flex items-center p-1 rounded-2xl bg-slate-100 dark:bg-slate-800/80 border border-slate-200/60 dark:border-slate-700">
@@ -271,7 +180,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <Clock className="w-4 h-4 text-orange-500" />
                 <span>Món theo ngày</span>
               </button>
               <button
@@ -282,18 +190,15 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <CalendarDays className="w-4 h-4 text-indigo-500" />
                 <span>Bảng cả tuần</span>
               </button>
             </div>
           </div>
         </div>
 
-        {/* Row 2: Shift Selector & Meal Type Filter */}
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-          {/* Shift (Ca Sáng / Ca Chiều) */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 mr-1 hidden sm:inline">Ca ăn:</span>
+            <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mr-2 hidden sm:inline">Ca:</span>
             <div className="flex items-center gap-1.5 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800">
               <button
                 onClick={() => setSelectedShift('morning')}
@@ -303,8 +208,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <Sun className="w-4 h-4 text-yellow-200" />
-                <span>Ca Sáng (Trưa)</span>
+                <span>Ăn Trưa</span>
               </button>
               <button
                 onClick={() => setSelectedShift('afternoon')}
@@ -314,15 +218,13 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
                 }`}
               >
-                <Moon className="w-4 h-4 text-indigo-300" />
-                <span>Ca Chiều (Tối)</span>
+                <span>Ăn Chiều</span>
               </button>
             </div>
           </div>
 
-          {/* Meal Type Filter (Tất cả / Mặn / Chay) */}
           <div className="flex items-center gap-2">
-            <span className="text-xs font-semibold text-slate-400 mr-1 hidden sm:inline">Khẩu vị:</span>
+            <span className="text-sm sm:text-base font-bold text-slate-900 dark:text-white mr-2 hidden sm:inline">Khẩu vị:</span>
             <div className="flex items-center gap-1 p-1 rounded-2xl bg-slate-100 dark:bg-slate-800">
               <button
                 onClick={() => setSelectedMealType('both')}
@@ -342,7 +244,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     : 'text-amber-700 dark:text-amber-400'
                 }`}
               >
-                🍖 Mặn
+                Mặn
               </button>
               <button
                 onClick={() => setSelectedMealType('vegetarian')}
@@ -352,17 +254,95 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     : 'text-emerald-700 dark:text-emerald-400'
                 }`}
               >
-                🥬 Chay
+                Chay
               </button>
             </div>
           </div>
         </div>
+
+        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+          <span className="block text-sm sm:text-base font-bold text-slate-900 dark:text-white mb-2">
+            Tìm kiếm món nhanh
+          </span>
+          <div className="relative w-full sm:max-w-xs">
+            <input
+              type="text"
+              placeholder=""
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full pl-10 pr-4 py-2 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:ring-2 focus:ring-amber-400 transition-all"
+            />
+            <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-slate-500 hover:text-slate-800 dark:hover:text-white bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded-md"
+              >
+                Xóa
+              </button>
+            )}
+          </div>
+        </div>
+
+        {searchQuery && searchResults && (
+          <div className="mt-3 p-4 rounded-xl bg-amber-500/10 border border-amber-500/20 text-slate-900 dark:text-white space-y-3">
+            <div className="flex items-center justify-between">
+              <h3 className="font-bold text-sm flex items-center gap-2 text-amber-700 dark:text-amber-400">
+                <Search className="w-4 h-4" />
+                Tìm thấy {searchResults.length} kết quả cho &quot;{searchQuery}&quot;
+              </h3>
+              <button
+                onClick={() => setSearchQuery('')}
+                className="text-xs text-slate-500 hover:text-slate-800 underline"
+              >
+                Đóng tìm kiếm
+              </button>
+            </div>
+
+            {searchResults.length === 0 ? (
+              <p className="text-sm text-slate-500">Không tìm thấy món ăn nào khớp với từ khóa.</p>
+            ) : (
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+                {searchResults.slice(0, 9).map((res, i) => (
+                  <div
+                    key={i}
+                    onClick={() => {
+                      setSelectedWeek(res.week);
+                      setSelectedShift(res.shift);
+                      setSelectedDay(res.dayKey);
+                      setSelectedMealType(res.mealType);
+                      setViewMode('today');
+                      setSearchQuery('');
+                    }}
+                    className="p-3 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-sm cursor-pointer hover:border-amber-400 hover:shadow-md transition-all text-xs space-y-1"
+                  >
+                    <div className="flex items-center justify-between text-slate-400">
+                      <span className="font-semibold text-slate-900 dark:text-white">
+                        {DAY_NAMES[res.dayKey].vi} • Tuần {res.week}
+                      </span>
+                      <span className={`px-1.5 py-0.5 rounded text-[10px] font-bold ${
+                        res.mealType === 'vegetarian' ? 'bg-emerald-100 text-emerald-700' : 'bg-amber-100 text-amber-700'
+                      }`}>
+                        {res.mealType === 'vegetarian' ? 'Chay' : 'Mặn'}
+                      </span>
+                    </div>
+                    <p className="font-bold text-sm text-slate-800 dark:text-slate-100 capitalize">
+                      {res.dishName}
+                    </p>
+                    <div className="text-[11px] text-slate-400 flex items-center justify-between">
+                      <span>{SHIFT_NAMES[res.shift].vi}</span>
+                      <span className="text-indigo-600 dark:text-indigo-400 font-medium">Bấm để xem →</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
-      {/* VIEW MODE 1: SINGLE DAY SPOTLIGHT */}
       {viewMode === 'today' && (
         <div className="space-y-5">
-          {/* Day Navigation Tabs (Thứ 2 -> Thứ 7) */}
           <div className="flex items-center gap-2 overflow-x-auto pb-2 scrollbar-thin">
             {DAY_KEYS.map((d) => {
               const isSelected = selectedDay === d;
@@ -372,29 +352,26 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                 <button
                   key={d}
                   onClick={() => setSelectedDay(d)}
-                  className={`flex-1 min-w-[100px] sm:min-w-0 px-4 py-3 rounded-2xl border text-center transition-all ${
+                  className={`relative flex-1 min-w-[110px] sm:min-w-[150px] pt-4 pb-8 px-4 rounded-2xl border text-center transition-all ${
                     isSelected
-                      ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900 border-transparent shadow-md scale-[1.02] font-extrabold'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 font-semibold'
+                      ? 'bg-gradient-to-r from-emerald-500 to-teal-500 text-white border-transparent shadow-md shadow-emerald-500/25 scale-[1.02] font-extrabold'
+                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-slate-800 hover:border-slate-300 font-medium'
                   }`}
                 >
-                  <div className="text-sm sm:text-base flex items-center justify-center gap-1.5">
+                  <div className="text-sm sm:text-base flex items-center justify-center">
                     <span>{DAY_NAMES[d].vi}</span>
-                    {isToday && (
-                      <span className={`w-2 h-2 rounded-full ${isSelected ? 'bg-amber-400' : 'bg-orange-500'}`} />
-                    )}
                   </div>
-                  <span className={`text-[10px] block font-medium ${isSelected ? 'opacity-80' : 'text-slate-400'}`}>
-                    {isToday ? 'Hôm nay' : 'Lịch tuần'}
-                  </span>
+                  {isToday && (
+                    <span className={`absolute bottom-1.5 right-2.5 text-[13px] sm:text-[15px] font-extrabold tracking-wide ${isSelected ? 'text-white' : 'text-slate-500/80 dark:text-slate-400/80'}`}>
+                      {todayLabel}
+                    </span>
+                  )}
                 </button>
               );
             })}
           </div>
 
-          {/* Cards Display for Selected Day */}
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-stretch">
-            {/* Regular Meal Card */}
             {(selectedMealType === 'both' || selectedMealType === 'regular') && (
               <div className="flex flex-col h-full">
                 <MealDishCard
@@ -405,7 +382,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               </div>
             )}
 
-            {/* Vegetarian Meal Card */}
             {(selectedMealType === 'both' || selectedMealType === 'vegetarian') && (
               <div className="flex flex-col h-full">
                 <MealDishCard
@@ -419,7 +395,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
         </div>
       )}
 
-      {/* VIEW MODE 2: WEEKLY GRID CALENDAR */}
       {viewMode === 'weekly' && (
         <div className="space-y-4">
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-5">
@@ -437,71 +412,69 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                       : 'bg-white dark:bg-slate-900 border-slate-200 dark:border-slate-800 shadow-sm'
                   }`}
                 >
-                  {/* Day Header */}
                   <div className="flex items-center justify-between pb-3 border-b border-slate-100 dark:border-slate-800">
                     <div className="flex items-center gap-2">
-                      <div className="w-8 h-8 rounded-xl bg-indigo-50 dark:bg-indigo-950 flex items-center justify-center text-indigo-600 dark:text-indigo-400 font-bold text-sm">
-                        {DAY_NAMES[d].short}
-                      </div>
                       <div>
                         <h4 className="font-extrabold text-base text-slate-900 dark:text-white">
                           {DAY_NAMES[d].vi}
                         </h4>
-                        <span className="text-[11px] text-slate-400">
-                          {SHIFT_NAMES[selectedShift].vi}
-                        </span>
                       </div>
                     </div>
                     {isToday && (
                       <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-orange-100 text-orange-700 dark:bg-orange-950 dark:text-orange-300">
-                        <CheckCircle2 className="w-3 h-3" />
                         Hôm nay
                       </span>
                     )}
                   </div>
 
-                  {/* Regular Dish Section */}
                   {(selectedMealType === 'both' || selectedMealType === 'regular') && (
                     <div className="p-3 rounded-2xl bg-amber-50/60 dark:bg-amber-950/20 border border-amber-200/60 dark:border-amber-900/40 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-amber-800 dark:text-amber-300 flex items-center gap-1.5">
-                          <span>🍖 Món Mặn:</span>
+                        <span className="text-base font-bold text-black dark:text-white flex items-center gap-1.5">
+                          <span>Món mặn:</span>
                         </span>
                       </div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">
-                        {getEffectiveDish(regularItem?.mainDish1, selectedWeek).name || '—'}
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize">
+                        {getEffectiveDish(regularItem?.mainDish1, selectedWeek).name || ''}
                       </p>
-                      {regularItem?.mainDish2 && (
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          + {getEffectiveDish(regularItem.mainDish2, selectedWeek).name}
-                        </p>
-                      )}
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-amber-200/40 space-y-0.5">
-                        <div><strong>Xào:</strong> {regularItem?.sideDish || '—'}</div>
-                        <div><strong>Canh:</strong> {regularItem?.soup || '—'}</div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize mt-1 min-h-[1.25rem]">
+                        {regularItem?.mainDish2 ? getEffectiveDish(regularItem.mainDish2, selectedWeek).name : ''}
+                      </p>
+                      <div className="pt-2 mt-2 border-t border-amber-200/40 space-y-1">
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize flex items-baseline gap-1">
+                          <span className="text-base font-bold text-black dark:text-white">Xào:</span>
+                          <span>{regularItem?.sideDish || ''}</span>
+                        </div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize flex items-baseline gap-1">
+                          <span className="text-base font-bold text-black dark:text-white">Canh:</span>
+                          <span>{regularItem?.soup || ''}</span>
+                        </div>
                       </div>
                     </div>
                   )}
 
-                  {/* Vegetarian Dish Section */}
                   {(selectedMealType === 'both' || selectedMealType === 'vegetarian') && (
                     <div className="p-3 rounded-2xl bg-emerald-50/60 dark:bg-emerald-950/20 border border-emerald-200/60 dark:border-emerald-900/40 space-y-2">
                       <div className="flex items-center justify-between">
-                        <span className="text-xs font-bold text-emerald-800 dark:text-emerald-300 flex items-center gap-1.5">
-                          <span>🥬 Món Chay:</span>
+                        <span className="text-base font-bold text-black dark:text-white flex items-center gap-1.5">
+                          <span>Món chay:</span>
                         </span>
                       </div>
-                      <p className="text-sm font-bold text-slate-900 dark:text-white capitalize">
-                        {getEffectiveDish(vegItem?.mainDish1, selectedWeek).name || '—'}
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize">
+                        {getEffectiveDish(vegItem?.mainDish1, selectedWeek).name || ''}
                       </p>
-                      {vegItem?.mainDish2 && (
-                        <p className="text-xs font-medium text-slate-600 dark:text-slate-300">
-                          + {getEffectiveDish(vegItem.mainDish2, selectedWeek).name}
-                        </p>
-                      )}
-                      <div className="text-[11px] text-slate-500 dark:text-slate-400 pt-1 border-t border-emerald-200/40 space-y-0.5">
-                        <div><strong>Xào:</strong> {vegItem?.sideDish || '—'}</div>
-                        <div><strong>Canh:</strong> {vegItem?.soup || '—'}</div>
+                      <p className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize mt-1 min-h-[1.25rem]">
+                        {vegItem?.mainDish2 ? getEffectiveDish(vegItem.mainDish2, selectedWeek).name : ''}
+                      </p>
+                      <div className="pt-2 mt-2 border-t border-emerald-200/40 space-y-1">
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize flex items-baseline gap-1">
+                          <span className="text-base font-bold text-black dark:text-white">Xào:</span>
+                          <span>{vegItem?.sideDish || ''}</span>
+                        </div>
+                        <div className="text-sm font-medium text-slate-900 dark:text-slate-100 capitalize flex items-baseline gap-1">
+                          <span className="text-base font-bold text-black dark:text-white">Canh:</span>
+                          <span>{vegItem?.soup || ''}</span>
+                        </div>
                       </div>
                     </div>
                   )}
