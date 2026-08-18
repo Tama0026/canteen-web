@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import './globals.css';
+import { Analytics } from '@vercel/analytics/next';
 
 const inter = Inter({ subsets: ['latin', 'vietnamese'] });
 
@@ -18,6 +19,7 @@ export default function RootLayout({
     <html lang="vi" className="h-full">
       <body className={`${inter.className} min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-slate-950 dark:text-slate-100`}>
         {children}
+        <Analytics />
       </body>
     </html>
   );
