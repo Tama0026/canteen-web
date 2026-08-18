@@ -15,7 +15,6 @@ import {
 import { getCycleForWeek, getCurrentDateInfo, getEffectiveDish } from '@/lib/menu-helpers';
 import {
   Search,
-  RotateCcw,
   CalendarDays,
   LayoutGrid,
   Table as TableIcon
@@ -38,19 +37,13 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
   const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(dateInfo.weekNumber);
   const [selectedDay, setSelectedDay] = useState<DayKey>(dateInfo.dayKey);
   const [viewFilter, setViewFilter] = useState<'all' | 'morning' | 'afternoon'>('all');
-  const [displayMode, setDisplayMode] = useState<'focus' | 'table'>('focus');
+  const [displayMode, setDisplayMode] = useState<'focus' | 'table'>('table');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const cycleKey = getCycleForWeek(selectedWeek);
   const cycleText = cycleKey === 'cycle_1_3' ? '1 - 3' : '2 - 4';
 
   const isSelectedDayToday = selectedDay === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
-
-  const handleJumpToToday = () => {
-    setSelectedWeek(dateInfo.weekNumber);
-    setSelectedDay(dateInfo.dayKey);
-    setSearchQuery('');
-  };
 
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return null;
@@ -232,11 +225,28 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-slate-700 w-[11%] uppercase">
                   {mealTypeLabel}
                 </th>
-                {DAY_KEYS.map((d) => (
-                  <th key={d} className="py-2.5 px-2 border-r border-slate-300 dark:border-slate-700 font-bold w-[12.5%]">
-                    {DAY_NAMES[d].vi}
-                  </th>
-                ))}
+                {DAY_KEYS.map((d) => {
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  return (
+                    <th
+                      key={d}
+                      className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 font-bold w-[12.5%] transition-colors ${
+                        isToday
+                          ? 'bg-[#FDE293] text-amber-950 dark:bg-amber-900/80 dark:text-amber-100 font-black'
+                          : ''
+                      }`}
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <span>{DAY_NAMES[d].vi}</span>
+                        {isToday && (
+                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-200">
+                            (Hôm nay)
+                          </span>
+                        )}
+                      </div>
+                    </th>
+                  );
+                })}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-200 dark:divide-slate-700 text-slate-800 dark:text-slate-200">
@@ -254,8 +264,15 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                   const item = initialMenu[cycleKey]?.[shift]?.[mealType]?.[d];
                   const eff = getEffectiveDish(item?.mainDish1, selectedWeek);
                   const hasDish2 = Boolean(item?.mainDish2 && item.mainDish2.trim());
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                   return (
-                    <td key={d} rowSpan={hasAnyMainDish2 && !hasDish2 ? 2 : 1} className="py-2 px-2 border-r last:border-r-0 border-slate-200 dark:border-slate-700 font-bold capitalize align-middle break-words">
+                    <td
+                      key={d}
+                      rowSpan={hasAnyMainDish2 && !hasDish2 ? 2 : 1}
+                      className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 font-bold capitalize align-middle break-words ${
+                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                      }`}
+                    >
                       {eff.name || '—'}
                     </td>
                   );
@@ -268,8 +285,14 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     const hasDish2 = Boolean(item?.mainDish2 && item.mainDish2.trim());
                     if (!hasDish2) return null;
                     const eff2 = getEffectiveDish(item?.mainDish2, selectedWeek);
+                    const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                     return (
-                      <td key={d} className="py-1.5 px-2 border-r last:border-r-0 border-slate-200 dark:border-slate-700 font-bold capitalize text-slate-800 dark:text-slate-200 align-middle break-words">
+                      <td
+                        key={d}
+                        className={`py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 font-bold capitalize text-slate-800 dark:text-slate-200 align-middle break-words ${
+                          isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                        }`}
+                      >
                         {eff2.name}
                       </td>
                     );
@@ -278,24 +301,75 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               )}
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Xào</td>
-                {DAY_KEYS.map((d) => <td key={d} className="py-2 px-2 border-r border-slate-200 dark:border-slate-700 capitalize align-middle">{initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.sideDish || '—'}</td>)}
+                {DAY_KEYS.map((d) => {
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  return (
+                    <td
+                      key={d}
+                      className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 capitalize align-middle ${
+                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                      }`}
+                    >
+                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.sideDish || '—'}
+                    </td>
+                  );
+                })}
               </tr>
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Canh</td>
-                {DAY_KEYS.map((d) => <td key={d} className="py-2 px-2 border-r border-slate-200 dark:border-slate-700 capitalize align-middle">{initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.soup || '—'}</td>)}
+                {DAY_KEYS.map((d) => {
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  return (
+                    <td
+                      key={d}
+                      className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 capitalize align-middle ${
+                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                      }`}
+                    >
+                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.soup || '—'}
+                    </td>
+                  );
+                })}
               </tr>
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Tráng miệng</td>
-                {DAY_KEYS.map((d) => <td key={d} className="py-2 px-2 border-r border-slate-200 dark:border-slate-700 capitalize align-middle">{initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.dessert || '—'}</td>)}
+                {DAY_KEYS.map((d) => {
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  return (
+                    <td
+                      key={d}
+                      className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 capitalize align-middle ${
+                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                      }`}
+                    >
+                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.dessert || '—'}
+                    </td>
+                  );
+                })}
               </tr>
               {mealType === 'vegetarian' && (
-                <tr className="bg-emerald-50/40 dark:bg-emerald-950/20 border-t border-slate-200 dark:border-slate-700">
-                  <td className="py-2 px-2 font-bold text-emerald-800 dark:text-emerald-300 border-r border-slate-300 dark:border-slate-700 align-middle">Đăng Ký</td>
-                  {DAY_KEYS.map((d) => (
-                    <td key={d} className="py-1.5 px-2 border-r last:border-r-0 border-slate-200 dark:border-slate-700 align-middle">
-                      <Link href="/dk-chay" className="inline-flex items-center justify-center w-full px-2 py-1 rounded-md bg-emerald-700 text-white text-[10px] font-bold">ĐK</Link>
-                    </td>
-                  ))}
+                <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
+                  <td className="py-2 px-2 font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">
+                    Đăng Ký
+                  </td>
+                  {DAY_KEYS.map((d) => {
+                    const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                    return (
+                      <td
+                        key={d}
+                        className={`py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 align-middle text-center ${
+                          isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                        }`}
+                      >
+                        <Link
+                          href="/dk-chay"
+                          className="inline-flex items-center justify-center w-[85%] py-1.5 px-3 rounded-md bg-[#007A5A] hover:bg-[#006046] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                        >
+                          ĐK
+                        </Link>
+                      </td>
+                    );
+                  })}
                 </tr>
               )}
             </tbody>
@@ -326,16 +400,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
             {/* View Mode Switcher */}
             <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
-                onClick={() => setDisplayMode('focus')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${displayMode === 'focus'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5 text-amber-600" />
-                <span>Hôm Nay</span>
-              </button>
-              <button
                 onClick={() => setDisplayMode('table')}
                 className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${displayMode === 'table'
                     ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
@@ -345,15 +409,17 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                 <TableIcon className="w-3.5 h-3.5 text-indigo-600" />
                 <span>Bảng Tuần</span>
               </button>
+              <button
+                onClick={() => setDisplayMode('focus')}
+                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${displayMode === 'focus'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
+                  }`}
+              >
+                <LayoutGrid className="w-3.5 h-3.5 text-amber-600" />
+                <span>Hôm Nay</span>
+              </button>
             </div>
-
-            <button
-              onClick={handleJumpToToday}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5 text-slate-500" />
-              <span>Về Hôm Nay</span>
-            </button>
           </div>
         </div>
 
@@ -527,21 +593,25 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
 
       {/* MODE 2: EXCEL-STYLE WEEKLY MATRIX TABLE VIEW */}
       {displayMode === 'table' && (
-        <div className="space-y-6">
+        <div className="space-y-8">
           {(viewFilter === 'all' || viewFilter === 'morning') && (
-            <div className="space-y-4">
-              <span className="text-xs font-black uppercase bg-amber-100 text-amber-900 dark:bg-amber-950/60 dark:text-amber-200 px-2.5 py-1 rounded-md border border-amber-200 dark:border-amber-900 inline-block">
-                CA SÁNG
-              </span>
+            <div className="space-y-3.5">
+              <div>
+                <span className="text-xs font-bold uppercase bg-[#FEF0D6] text-[#7C3A00] dark:bg-amber-950/60 dark:text-amber-200 px-3 py-1 rounded-md border border-[#FDE293] dark:border-amber-900 inline-block shadow-2xs">
+                  CA SÁNG
+                </span>
+              </div>
               {renderTableBlock('morning', 'regular', 'CA SÁNG', 'MÓN MẶN')}
               {renderTableBlock('morning', 'vegetarian', 'CA SÁNG', 'MÓN CHAY')}
             </div>
           )}
           {(viewFilter === 'all' || viewFilter === 'afternoon') && (
-            <div className="space-y-4">
-              <span className="text-xs font-black uppercase bg-indigo-100 text-indigo-900 dark:bg-indigo-950/60 dark:text-indigo-200 px-2.5 py-1 rounded-md border border-indigo-200 dark:border-indigo-900 inline-block">
-                CA CHIỀU
-              </span>
+            <div className="space-y-3.5">
+              <div>
+                <span className="text-xs font-bold uppercase bg-[#EEF2FF] text-[#3730A3] dark:bg-indigo-950/60 dark:text-indigo-200 px-3 py-1 rounded-md border border-[#C7D2FE] dark:border-indigo-900 inline-block shadow-2xs">
+                  CA CHIỀU
+                </span>
+              </div>
               {renderTableBlock('afternoon', 'regular', 'CA CHIỀU', 'MÓN MẶN')}
               {renderTableBlock('afternoon', 'vegetarian', 'CA CHIỀU', 'MÓN CHAY')}
             </div>
