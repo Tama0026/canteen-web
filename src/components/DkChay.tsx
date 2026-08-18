@@ -454,7 +454,7 @@ export default function DkChay() {
                     >
                       <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">{idx + 1}</td>
                       <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">{reg.id}</td>
-                      <td className="px-4 py-2 font-medium border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200">{reg.name}</td>
+                      <td className="px-4 py-2 font-medium border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-center">{reg.name}</td>
                       <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">
                         {reg.isLunch && <Check className="w-5 h-5 mx-auto text-emerald-500" strokeWidth={3} />}
                       </td>
