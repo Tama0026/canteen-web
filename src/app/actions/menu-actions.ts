@@ -6,16 +6,12 @@ import { parseMenuExcel } from '@/lib/excel-parser';
 import { CycleKey, ShiftKey, MealTypeKey, DayKey, MenuItem, FullMenuDatabase } from '@/types/menu';
 import { INITIAL_MENU_DATABASE } from '@/data/initial-menu';
 
-/**
- * Server Action: Lấy toàn bộ thực đơn
- */
+
 export async function getMenuAction(): Promise<FullMenuDatabase> {
   return await getFullMenu();
 }
 
-/**
- * Server Action: Cập nhật 1 món ăn từ Admin Form
- */
+
 export async function updateDishAction(
   cycle: CycleKey,
   shift: ShiftKey,
@@ -33,9 +29,7 @@ export async function updateDishAction(
   }
 }
 
-/**
- * Server Action: Upload file Excel mới để cập nhật toàn bộ Menu
- */
+
 export async function importExcelMenuAction(formData: FormData) {
   try {
     const file = formData.get('excelFile') as File | null;
@@ -56,16 +50,15 @@ export async function importExcelMenuAction(formData: FormData) {
       message: success 
         ? 'Đã tải lên và cập nhật thực đơn thành công từ file Excel!' 
         : 'Có lỗi xảy ra khi lưu thực đơn vào Database',
+      data: success ? parsedData : undefined,
     };
   } catch (error: any) {
     console.error('Lỗi khi import file Excel:', error);
-    return { success: false, message: `Lỗi đọc file: ${error?.message || 'Định dạng file không hợp lệ'}` };
+    return { success: false, message: `Lỗi đọc file: ${error?.message || 'Định dạng file không hợp lệ'}`, data: undefined };
   }
 }
 
-/**
- * Server Action: Khôi phục về thực đơn gốc ban đầu
- */
+
 export async function resetMenuToDefaultAction() {
   try {
     await saveFullMenu(INITIAL_MENU_DATABASE);

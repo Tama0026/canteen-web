@@ -76,7 +76,7 @@ export function parseMenuExcel(buffer: ArrayBuffer | Buffer): FullMenuDatabase {
             const cellVal = String(row[colIdx] || '').trim();
             // Allow empty string to overwrite if it's an update
             result[cycleKey][currentShift!][currentMealType!][dayKey][dishType!] = cellVal;
-            if (cellVal) hasValidData = true;
+            hasValidData = true;
           });
         }
       }

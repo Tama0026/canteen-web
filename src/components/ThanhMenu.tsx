@@ -9,12 +9,12 @@ export default function ThanhMenu() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-16 sm:h-20">
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-2xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-500 flex items-center justify-center text-white shadow-lg shadow-orange-500/20 group-hover:scale-105 transition-transform">
-              <UtensilsCrossed className="w-5 h-5 sm:w-6 sm:h-6" />
+            <div className="w-10 h-10 sm:w-12 sm:h-12 overflow-hidden group-hover:scale-105 transition-transform shrink-0">
+              <img src="/icon.png" alt="MENU SIMONE Logo" className="w-full h-full object-contain" />
             </div>
             <div className="flex items-center gap-2">
               <span className="font-extrabold text-lg sm:text-xl text-slate-900 dark:text-white tracking-tight uppercase">
-                Thực Đơn Nhà Ăn Công Ty
+                MENU SIMONE TG1
               </span>
             </div>
           </Link>

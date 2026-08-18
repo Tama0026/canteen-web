@@ -5,6 +5,7 @@ import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
 import { X, Download, Plus, Trash2, Edit2, Check, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
+import { getDkChayAction, saveDkChayAction } from '@/app/actions/dkchay-actions';
 
 interface Registration {
   id: string;
@@ -77,16 +78,17 @@ export default function DkChay() {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [hiddenNames, setHiddenNames] = useState<string[]>([]);
+  const [isSaving, setIsSaving] = useState(false);
+  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
   useEffect(() => {
-    const saved = localStorage.getItem('canteen_dkchay_registrations');
-    if (saved) {
-      try {
-        setRegistrations(JSON.parse(saved));
-      } catch (e) {
-        console.error('Failed to load saved data');
-      }
+    async function loadData() {
+      const dbRegistrations = await getDkChayAction();
+      setRegistrations(dbRegistrations);
+      setIsLoaded(true);
     }
+    loadData();
+
     const hidIds = localStorage.getItem('canteen_hidden_ids');
     if (hidIds) {
       try { setHiddenIds(JSON.parse(hidIds)); } catch(e) {}
@@ -95,16 +97,27 @@ export default function DkChay() {
     if (hidNames) {
       try { setHiddenNames(JSON.parse(hidNames)); } catch(e) {}
     }
-    setIsLoaded(true);
   }, []);
 
   useEffect(() => {
     if (isLoaded) {
-      localStorage.setItem('canteen_dkchay_registrations', JSON.stringify(registrations));
       localStorage.setItem('canteen_hidden_ids', JSON.stringify(hiddenIds));
       localStorage.setItem('canteen_hidden_names', JSON.stringify(hiddenNames));
     }
-  }, [registrations, hiddenIds, hiddenNames, isLoaded]);
+  }, [hiddenIds, hiddenNames, isLoaded]);
+
+  useEffect(() => {
+    if (isLoaded) {
+      if (isInitialLoad) {
+        setIsInitialLoad(false);
+        return;
+      }
+      setIsSaving(true);
+      saveDkChayAction(registrations).then(() => {
+        setIsSaving(false);
+      });
+    }
+  }, [registrations, isLoaded]);
 
   const openAddModal = () => {
     setIdInput('');
@@ -216,9 +229,9 @@ export default function DkChay() {
     });
 
     
-    const lunchBg = 'FFFAc090'; // light orange
-    const dinnerBg = 'FF5b9bd5'; // blue
-    const headerBg = 'FFFFe699'; // yellow
+    const lunchBg = 'FFFAc090'; 
+    const dinnerBg = 'FF5b9bd5'; 
+    const headerBg = 'FFFFe699'; 
     
     const lunchTitleFont: Partial<ExcelJS.Font> = { name: 'Times New Roman', size: 24, bold: true };
     const dinnerTitleFont: Partial<ExcelJS.Font> = { name: 'Times New Roman', size: 24, bold: true };
@@ -234,17 +247,17 @@ export default function DkChay() {
       right: { style: 'thin' }
     };
     
-    worksheet.getColumn('A').width = 3.56;  // 25 pixels
-    worksheet.getColumn('B').width = 7.28;  // 51 pixels
-    worksheet.getColumn('C').width = 17.85; // 125 pixels
-    worksheet.getColumn('D').width = 45.56; // 319 pixels
-    worksheet.getColumn('E').width = 50.56; // 354 pixels
-    worksheet.getColumn('F').width = 11.42; // 80 pixels
-    worksheet.getColumn('G').width = 7.28;  // 51 pixels
-    worksheet.getColumn('H').width = 17.85; // 125 pixels
-    worksheet.getColumn('I').width = 45.56; // 319 pixels
-    worksheet.getColumn('J').width = 50.56; // 354 pixels
-    worksheet.getColumn('K').width = 11.42; // 80 pixels
+    worksheet.getColumn('A').width = 3.56;  
+    worksheet.getColumn('B').width = 7.28;  
+    worksheet.getColumn('C').width = 17.85; 
+    worksheet.getColumn('D').width = 45.56; 
+    worksheet.getColumn('E').width = 50.56; 
+    worksheet.getColumn('F').width = 11.42; 
+    worksheet.getColumn('G').width = 7.28;  
+    worksheet.getColumn('H').width = 17.85; 
+    worksheet.getColumn('I').width = 45.56; 
+    worksheet.getColumn('J').width = 50.56; 
+    worksheet.getColumn('K').width = 11.42; 
 
     
     worksheet.mergeCells('B1:E1');
@@ -279,9 +292,9 @@ export default function DkChay() {
     cellG2.alignment = { horizontal: 'center', vertical: 'middle' };
 
     
-    worksheet.getRow(1).height = 43.5; // 58 pixels
-    worksheet.getRow(2).height = 36;   // 48 pixels
-    worksheet.getRow(3).height = 22.5; // 30 pixels
+    worksheet.getRow(1).height = 43.5; 
+    worksheet.getRow(2).height = 36;   
+    worksheet.getRow(3).height = 22.5; 
 
     
     const headers = [
@@ -316,7 +329,7 @@ export default function DkChay() {
     for (let i = 0; i < maxRows; i++) {
       const rowIdx = 4 + i;
       const row = worksheet.getRow(rowIdx);
-      row.height = 16.5; // 22 pixels
+      row.height = 16.5; 
       
       
       worksheet.getCell(`B${rowIdx}`).value = lunchList[i] ? i + 1 : '';

@@ -2,8 +2,9 @@ import { neon, NeonQueryFunction } from '@neondatabase/serverless';
 import { FullMenuDatabase, CycleKey, ShiftKey, MealTypeKey, DayKey, DAY_KEYS } from '@/types/menu';
 import { INITIAL_MENU_DATABASE } from '@/data/initial-menu';
 
-// Biến lưu trữ tạm thời khi chạy Local không có DATABASE_URL
+
 let localDatabaseCache: FullMenuDatabase = JSON.parse(JSON.stringify(INITIAL_MENU_DATABASE));
+let localDkChayCache: { date: string, registrations: any[] } = { date: '', registrations: [] };
 
 function getSql(): NeonQueryFunction<false, false> | null {
   const databaseUrl = process.env.DATABASE_URL;
@@ -18,9 +19,7 @@ function getSql(): NeonQueryFunction<false, false> | null {
   }
 }
 
-/**
- * Khởi tạo bảng nếu chưa có trên Neon Postgres
- */
+
 export async function initDatabaseSchema() {
   const sql = getSql();
   if (!sql) return;
@@ -41,9 +40,17 @@ export async function initDatabaseSchema() {
         updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         UNIQUE(cycle_key, shift_key, meal_type, day_key)
       );
+
+      CREATE TABLE IF NOT EXISTS canteen_dkchay (
+        id VARCHAR(255) PRIMARY KEY,
+        name VARCHAR(255) NOT NULL,
+        is_lunch BOOLEAN DEFAULT false,
+        is_dinner BOOLEAN DEFAULT false,
+        reg_date VARCHAR(20) NOT NULL
+      );
     `;
 
-    // Kiểm tra xem đã có dữ liệu chưa, nếu chưa có thì Seed từ INITIAL_MENU_DATABASE
+    
     const countRes = await sql`SELECT COUNT(*) as count FROM canteen_menu;`;
     const count = parseInt(countRes[0]?.count || '0', 10);
 
@@ -56,9 +63,7 @@ export async function initDatabaseSchema() {
   }
 }
 
-/**
- * Nạp toàn bộ dữ liệu mẫu vào Neon Postgres
- */
+
 export async function seedDatabaseFromInitial() {
   const sql = getSql();
   if (!sql) return;
@@ -92,9 +97,7 @@ export async function seedDatabaseFromInitial() {
   }
 }
 
-/**
- * Lấy toàn bộ Menu từ Neon Postgres (hoặc Local Cache)
- */
+
 export async function getFullMenu(): Promise<FullMenuDatabase> {
   const sql = getSql();
   if (!sql) {
@@ -112,7 +115,7 @@ export async function getFullMenu(): Promise<FullMenuDatabase> {
       return localDatabaseCache;
     }
 
-    // Xây dựng lại cấu trúc FullMenuDatabase
+    
     const dbData: FullMenuDatabase = JSON.parse(JSON.stringify(INITIAL_MENU_DATABASE));
     let latestUpdate = '';
 
@@ -144,9 +147,7 @@ export async function getFullMenu(): Promise<FullMenuDatabase> {
   }
 }
 
-/**
- * Cập nhật 1 món ăn
- */
+
 export async function updateMenuItem(
   cycle: CycleKey,
   shift: ShiftKey,
@@ -160,7 +161,7 @@ export async function updateMenuItem(
     dessert?: string;
   }
 ): Promise<boolean> {
-  // Cập nhật local cache
+  
   if (localDatabaseCache[cycle]?.[shift]?.[mealType]?.[day]) {
     localDatabaseCache[cycle][shift][mealType][day] = {
       mainDish1: item.mainDish1 || '',
@@ -196,9 +197,7 @@ export async function updateMenuItem(
   }
 }
 
-/**
- * Cập nhật toàn bộ Database từ Object đã parse
- */
+
 export async function saveFullMenu(fullMenu: FullMenuDatabase): Promise<boolean> {
   localDatabaseCache = JSON.parse(JSON.stringify(fullMenu));
   localDatabaseCache.lastUpdated = new Date().toISOString();
@@ -238,6 +237,51 @@ export async function saveFullMenu(fullMenu: FullMenuDatabase): Promise<boolean>
     return true;
   } catch (error) {
     console.error('Lỗi khi lưu full menu vào Neon DB:', error);
+    return false;
+  }
+}
+
+export async function getDkChayRegistrations(today: string) {
+  const sql = getSql();
+  if (!sql) {
+    if (localDkChayCache.date !== today) {
+      localDkChayCache = { date: today, registrations: [] };
+    }
+    return localDkChayCache.registrations;
+  }
+  try {
+    await initDatabaseSchema();
+    await sql`DELETE FROM canteen_dkchay WHERE reg_date != ${today}`;
+    const rows = await sql`SELECT id, name, is_lunch, is_dinner FROM canteen_dkchay WHERE reg_date = ${today}`;
+    return rows.map((r: any) => ({
+      id: r.id,
+      name: r.name,
+      isLunch: r.is_lunch,
+      isDinner: r.is_dinner
+    }));
+  } catch(e) {
+    console.error('Lỗi getDkChayRegistrations:', e);
+    return [];
+  }
+}
+
+export async function saveDkChayRegistrations(registrations: any[], today: string) {
+  const sql = getSql();
+  if (!sql) {
+    localDkChayCache = { date: today, registrations };
+    return true;
+  }
+  try {
+    await initDatabaseSchema();
+    await sql`DELETE FROM canteen_dkchay WHERE reg_date = ${today}`;
+    if (registrations.length > 0) {
+      for (const reg of registrations) {
+        await sql`INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date) VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today})`;
+      }
+    }
+    return true;
+  } catch(e) {
+    console.error('Lỗi saveDkChayRegistrations:', e);
     return false;
   }
 }
