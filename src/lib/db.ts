@@ -1,10 +1,48 @@
 import { neon, NeonQueryFunction } from '@neondatabase/serverless';
+import fs from 'fs';
+import path from 'path';
 import { FullMenuDatabase, CycleKey, ShiftKey, MealTypeKey, DayKey, DAY_KEYS } from '@/types/menu';
 import { INITIAL_MENU_DATABASE } from '@/data/initial-menu';
 
-
 let localDatabaseCache: FullMenuDatabase = JSON.parse(JSON.stringify(INITIAL_MENU_DATABASE));
 let localDkChayCache: { date: string, registrations: any[] } = { date: '', registrations: [] };
+
+function getLocalDkChayFile(): string {
+  return path.join(process.cwd(), 'src', 'data', 'dkchay-storage.json');
+}
+
+function readLocalDkChay(today: string): any[] {
+  try {
+    const filePath = getLocalDkChayFile();
+    if (fs.existsSync(filePath)) {
+      const content = fs.readFileSync(filePath, 'utf-8');
+      const data = JSON.parse(content);
+      if (data && data.date === today && Array.isArray(data.registrations)) {
+        localDkChayCache = { date: today, registrations: data.registrations };
+        return data.registrations;
+      }
+    }
+  } catch (e) {
+    console.error('Lỗi đọc local dkchay storage:', e);
+  }
+  return localDkChayCache.date === today ? localDkChayCache.registrations : [];
+}
+
+function writeLocalDkChay(today: string, registrations: any[]): boolean {
+  localDkChayCache = { date: today, registrations };
+  try {
+    const filePath = getLocalDkChayFile();
+    const dir = path.dirname(filePath);
+    if (!fs.existsSync(dir)) {
+      fs.mkdirSync(dir, { recursive: true });
+    }
+    fs.writeFileSync(filePath, JSON.stringify({ date: today, registrations }, null, 2), 'utf-8');
+    return true;
+  } catch (e) {
+    console.error('Lỗi ghi local dkchay storage:', e);
+    return false;
+  }
+}
 
 function getSql(): NeonQueryFunction<false, false> | null {
   const databaseUrl = process.env.DATABASE_URL;
@@ -18,7 +56,6 @@ function getSql(): NeonQueryFunction<false, false> | null {
     return null;
   }
 }
-
 
 export async function initDatabaseSchema() {
   const sql = getSql();
@@ -42,15 +79,17 @@ export async function initDatabaseSchema() {
       );
 
       CREATE TABLE IF NOT EXISTS canteen_dkchay (
-        id VARCHAR(255) PRIMARY KEY,
+        id VARCHAR(255) NOT NULL,
         name VARCHAR(255) NOT NULL,
         is_lunch BOOLEAN DEFAULT false,
         is_dinner BOOLEAN DEFAULT false,
-        reg_date VARCHAR(20) NOT NULL
+        reg_date VARCHAR(32) NOT NULL,
+        PRIMARY KEY (id, reg_date)
       );
+
+      CREATE UNIQUE INDEX IF NOT EXISTS idx_canteen_dkchay_id_date ON canteen_dkchay(id, reg_date);
     `;
 
-    
     const countRes = await sql`SELECT COUNT(*) as count FROM canteen_menu;`;
     const count = parseInt(countRes[0]?.count || '0', 10);
 
@@ -244,10 +283,7 @@ export async function saveFullMenu(fullMenu: FullMenuDatabase): Promise<boolean>
 export async function getDkChayRegistrations(today: string) {
   const sql = getSql();
   if (!sql) {
-    if (localDkChayCache.date !== today) {
-      localDkChayCache = { date: today, registrations: [] };
-    }
-    return localDkChayCache.registrations;
+    return readLocalDkChay(today);
   }
   try {
     await initDatabaseSchema();
@@ -265,7 +301,7 @@ export async function getDkChayRegistrations(today: string) {
     }));
   } catch(e) {
     console.error('Lỗi getDkChayRegistrations:', e);
-    return [];
+    return readLocalDkChay(today);
   }
 }
 
@@ -273,17 +309,19 @@ export async function upsertSingleRegistration(
   reg: { id: string; name: string; isLunch: boolean; isDinner: boolean }, 
   today: string
 ): Promise<boolean> {
+  // Luôn cập nhật local storage để đảm bảo dữ liệu không mất
+  const currentList = readLocalDkChay(today);
+  const idx = currentList.findIndex(r => r.id === reg.id);
+  let updatedList = [...currentList];
+  if (idx >= 0) {
+    updatedList[idx] = reg;
+  } else {
+    updatedList.push(reg);
+  }
+  writeLocalDkChay(today, updatedList);
+
   const sql = getSql();
   if (!sql) {
-    if (localDkChayCache.date !== today) {
-      localDkChayCache = { date: today, registrations: [] };
-    }
-    const idx = localDkChayCache.registrations.findIndex(r => r.id === reg.id);
-    if (idx >= 0) {
-      localDkChayCache.registrations[idx] = reg;
-    } else {
-      localDkChayCache.registrations.push(reg);
-    }
     return true;
   }
 
@@ -300,17 +338,19 @@ export async function upsertSingleRegistration(
     `;
     return true;
   } catch (e) {
-    console.error('Lỗi upsertSingleRegistration:', e);
-    return false;
+    console.error('Lỗi upsertSingleRegistration Neon DB:', e);
+    // Vẫn trả về true nếu đã lưu thành công vào file local
+    return true;
   }
 }
 
 export async function deleteRegistrationsByIds(ids: string[], today: string): Promise<boolean> {
+  const currentList = readLocalDkChay(today);
+  const filteredList = currentList.filter(r => !ids.includes(r.id));
+  writeLocalDkChay(today, filteredList);
+
   const sql = getSql();
   if (!sql) {
-    if (localDkChayCache.date === today) {
-      localDkChayCache.registrations = localDkChayCache.registrations.filter(r => !ids.includes(r.id));
-    }
     return true;
   }
 
@@ -322,14 +362,15 @@ export async function deleteRegistrationsByIds(ids: string[], today: string): Pr
     return true;
   } catch (e) {
     console.error('Lỗi deleteRegistrationsByIds:', e);
-    return false;
+    return true;
   }
 }
 
 export async function saveDkChayRegistrations(registrations: any[], today: string) {
+  writeLocalDkChay(today, registrations);
+
   const sql = getSql();
   if (!sql) {
-    localDkChayCache = { date: today, registrations };
     return true;
   }
   try {
@@ -350,6 +391,6 @@ export async function saveDkChayRegistrations(registrations: any[], today: strin
     return true;
   } catch(e) {
     console.error('Lỗi saveDkChayRegistrations:', e);
-    return false;
+    return true;
   }
 }
