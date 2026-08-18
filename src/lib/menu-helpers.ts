@@ -126,3 +126,20 @@ export function getCurrentDateInfo(): {
     formattedDate,
   };
 }
+
+/**
+ * Lấy mã ngày đăng ký (Session Date Key) theo ngày hiện tại (Tự động làm mới vào 00:00 hàng ngày)
+ */
+export function getDkChaySessionDate(): { dateKey: string; displayDate: string } {
+  const now = new Date();
+  const yyyy = now.getFullYear();
+  const mm = String(now.getMonth() + 1).padStart(2, '0');
+  const dd = String(now.getDate()).padStart(2, '0');
+  const dateKey = `${yyyy}-${mm}-${dd}`;
+
+  const dayNames = ['Chủ Nhật', 'Thứ Hai', 'Thứ Ba', 'Thứ Tư', 'Thứ Năm', 'Thứ Sáu', 'Thứ Bảy'];
+  const dayName = dayNames[now.getDay()];
+  const displayDate = `${dayName}, Ngày ${now.getDate()} tháng ${now.getMonth() + 1}, ${now.getFullYear()}`;
+
+  return { dateKey, displayDate };
+}

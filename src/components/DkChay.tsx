@@ -23,7 +23,7 @@ import {
   deleteDkChayAction, 
   saveDkChayAction 
 } from '@/app/actions/dkchay-actions';
-import { getCurrentDateInfo } from '@/lib/menu-helpers';
+import { getDkChaySessionDate } from '@/lib/menu-helpers';
 
 interface Registration {
   id: string;
@@ -333,7 +333,7 @@ export default function DkChay() {
 
 
     
-    const sortedRegistrations = [...registrations].sort((a, b) => Number(a.id) - Number(b.id));
+    const sortedRegistrations = [...registrations];
     const lunchList = sortedRegistrations.filter(r => r.isLunch);
     const dinnerList = sortedRegistrations.filter(r => r.isDinner);
     
@@ -406,8 +406,9 @@ export default function DkChay() {
               <Leaf className="w-4 h-4 text-emerald-600" />
               <span>Danh Sách Đăng Ký Cơm Chay</span>
             </h1>
-            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
-              Chỉ áp dụng: {getCurrentDateInfo().formattedDate}
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>
+              <span>Áp dụng: {getDkChaySessionDate().displayDate}</span>
             </span>
           </div>
         </div>

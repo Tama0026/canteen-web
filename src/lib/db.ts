@@ -84,9 +84,11 @@ export async function initDatabaseSchema() {
         is_lunch BOOLEAN DEFAULT false,
         is_dinner BOOLEAN DEFAULT false,
         reg_date VARCHAR(32) NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
         PRIMARY KEY (id, reg_date)
       );
 
+      ALTER TABLE canteen_dkchay ADD COLUMN IF NOT EXISTS created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP;
       CREATE UNIQUE INDEX IF NOT EXISTS idx_canteen_dkchay_id_date ON canteen_dkchay(id, reg_date);
     `;
 
@@ -291,7 +293,7 @@ export async function getDkChayRegistrations(today: string) {
       SELECT id, name, is_lunch, is_dinner 
       FROM canteen_dkchay 
       WHERE reg_date = ${today}
-      ORDER BY id ASC
+      ORDER BY created_at ASC, id ASC
     `;
     return rows.map((r: any) => ({
       id: r.id,
@@ -328,8 +330,8 @@ export async function upsertSingleRegistration(
   try {
     await initDatabaseSchema();
     await sql`
-      INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date)
-      VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today})
+      INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date, created_at)
+      VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today}, NOW())
       ON CONFLICT (id, reg_date)
       DO UPDATE SET
         name = EXCLUDED.name,
@@ -339,7 +341,6 @@ export async function upsertSingleRegistration(
     return true;
   } catch (e) {
     console.error('Lỗi upsertSingleRegistration Neon DB:', e);
-    // Vẫn trả về true nếu đã lưu thành công vào file local
     return true;
   }
 }
@@ -379,8 +380,8 @@ export async function saveDkChayRegistrations(registrations: any[], today: strin
     if (registrations.length > 0) {
       for (const reg of registrations) {
         await sql`
-          INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date) 
-          VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today})
+          INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date, created_at) 
+          VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today}, NOW())
           ON CONFLICT (id, reg_date) DO UPDATE SET
             name = EXCLUDED.name,
             is_lunch = EXCLUDED.is_lunch,

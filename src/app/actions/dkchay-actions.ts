@@ -7,24 +7,21 @@ import {
   upsertSingleRegistration,
   deleteRegistrationsByIds
 } from '@/lib/db';
+import { getDkChaySessionDate } from '@/lib/menu-helpers';
 
-function getTodayKey(): string {
-  const d = new Date();
-  const yyyy = d.getFullYear();
-  const mm = String(d.getMonth() + 1).padStart(2, '0');
-  const dd = String(d.getDate()).padStart(2, '0');
-  return `${yyyy}-${mm}-${dd}`;
+export async function getDkChaySessionInfoAction() {
+  return getDkChaySessionDate();
 }
 
 export async function getDkChayAction() {
-  const today = getTodayKey();
-  return await getDkChayRegistrations(today);
+  const session = getDkChaySessionDate();
+  return await getDkChayRegistrations(session.dateKey);
 }
 
 export async function upsertDkChayAction(reg: { id: string; name: string; isLunch: boolean; isDinner: boolean }) {
   try {
-    const today = getTodayKey();
-    const success = await upsertSingleRegistration(reg, today);
+    const session = getDkChaySessionDate();
+    const success = await upsertSingleRegistration(reg, session.dateKey);
     revalidatePath('/dk-chay');
     return { success, message: success ? 'Đã lưu đăng ký' : 'Lỗi khi lưu' };
   } catch (error) {
@@ -35,8 +32,8 @@ export async function upsertDkChayAction(reg: { id: string; name: string; isLunc
 
 export async function deleteDkChayAction(ids: string[]) {
   try {
-    const today = getTodayKey();
-    const success = await deleteRegistrationsByIds(ids, today);
+    const session = getDkChaySessionDate();
+    const success = await deleteRegistrationsByIds(ids, session.dateKey);
     revalidatePath('/dk-chay');
     return { success, message: success ? 'Đã xóa đăng ký' : 'Lỗi khi xóa' };
   } catch (error) {
@@ -47,8 +44,8 @@ export async function deleteDkChayAction(ids: string[]) {
 
 export async function saveDkChayAction(registrations: any[]) {
   try {
-    const today = getTodayKey();
-    const success = await saveDkChayRegistrations(registrations, today);
+    const session = getDkChaySessionDate();
+    const success = await saveDkChayRegistrations(registrations, session.dateKey);
     revalidatePath('/dk-chay');
     return { success, message: success ? 'Đã lưu danh sách' : 'Lỗi khi lưu' };
   } catch (error) {
