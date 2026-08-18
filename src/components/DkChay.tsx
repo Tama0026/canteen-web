@@ -497,45 +497,51 @@ export default function DkChay() {
         </div>
       </div>
 
-      {registrations.length > 0 && (
-        <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 w-full flex flex-col overflow-hidden min-h-[70vh]">
-          <div className="flex-1 overflow-y-auto p-0">
-            <table className="w-full text-sm text-left border-collapse border border-slate-200 dark:border-slate-700">
-              <thead className="bg-slate-100 dark:bg-slate-900/50 sticky top-0 shadow-sm z-10">
-                  <tr>
-                    <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[10%] text-center">STT</th>
-                    <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[20%] text-center">MÃ SỐ</th>
-                    <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[40%] text-center">HỌ VÀ TÊN</th>
-                    <th colSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[30%] text-center">CA ĂN</th>
+      <div className="bg-white dark:bg-slate-900 rounded-2xl shadow-sm border border-slate-200 dark:border-slate-800 w-full flex flex-col overflow-hidden min-h-[50vh]">
+        <div className="flex-1 overflow-y-auto p-0">
+          <table className="w-full text-sm text-left border-collapse border border-slate-200 dark:border-slate-700">
+            <thead className="bg-slate-100 dark:bg-slate-900/50 sticky top-0 shadow-sm z-10">
+              <tr>
+                <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[10%] text-center">STT</th>
+                <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[20%] text-center">MÃ SỐ</th>
+                <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[40%] text-center">HỌ VÀ TÊN</th>
+                <th colSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[30%] text-center">CA ĂN</th>
+              </tr>
+              <tr>
+                <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center uppercase">CA SÁNG</th>
+                <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center uppercase">CA CHIỀU</th>
+              </tr>
+            </thead>
+            <tbody>
+              {registrations.length === 0 ? (
+                <tr>
+                  <td colSpan={5} className="py-12 text-center text-slate-400 text-xs sm:text-sm font-medium">
+                    Chưa có ai đăng ký cơm chay hôm nay. Bấm nút <strong className="text-slate-700 dark:text-slate-300">"Thêm mới"</strong> ở góc trên bên phải để đăng ký.
+                  </td>
+                </tr>
+              ) : (
+                registrations.map((reg, idx) => (
+                  <tr 
+                    key={idx}
+                    onClick={() => handleToggleSelect(idx)}
+                    className={`cursor-pointer ${selectedIndices.includes(idx) ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'}`}
+                  >
+                    <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">{idx + 1}</td>
+                    <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">{reg.id}</td>
+                    <td className="px-4 py-2 font-medium border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-center">{reg.name}</td>
+                    <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">
+                      {reg.isLunch && <Check className="w-5 h-5 mx-auto text-emerald-500" strokeWidth={3} />}
+                    </td>
+                    <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">
+                      {reg.isDinner && <Check className="w-5 h-5 mx-auto text-emerald-500" strokeWidth={3} />}
+                    </td>
                   </tr>
-                  <tr>
-                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center uppercase">CA SÁNG</th>
-                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center uppercase">CA CHIỀU</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {registrations.map((reg, idx) => (
-                    <tr 
-                      key={idx}
-                      onClick={() => handleToggleSelect(idx)}
-                      className={`cursor-pointer ${selectedIndices.includes(idx) ? 'bg-indigo-50 dark:bg-indigo-900/20' : 'hover:bg-slate-50 dark:hover:bg-slate-800/30'}`}
-                    >
-                      <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">{idx + 1}</td>
-                      <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-slate-700 dark:text-slate-300 text-center">{reg.id}</td>
-                      <td className="px-4 py-2 font-medium border border-slate-200 dark:border-slate-700 text-slate-800 dark:text-slate-200 text-center">{reg.name}</td>
-                      <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">
-                        {reg.isLunch && <Check className="w-5 h-5 mx-auto text-emerald-500" strokeWidth={3} />}
-                      </td>
-                      <td className="px-4 py-2 border border-slate-200 dark:border-slate-700 text-center">
-                        {reg.isDinner && <Check className="w-5 h-5 mx-auto text-emerald-500" strokeWidth={3} />}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
-      )}
+      </div>
 
       {isModalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4">
