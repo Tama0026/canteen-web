@@ -1,20 +1,15 @@
-import { getMenuAction } from '@/app/actions/menu-actions';
 import ThanhMenu from '@/components/ThanhMenu';
-import MenuDashboard from '@/components/MenuDashboard';
+import DkChay from '@/components/DkChay';
 
-export const revalidate = 0; // Luôn lấy dữ liệu mới nhất từ DB khi refresh
-
-export default async function HomePage() {
-  const initialMenu = await getMenuAction();
-
+export default function DkChayPage() {
   return (
     <div className="min-h-screen bg-slate-50/60 dark:bg-slate-950 text-slate-900 dark:text-slate-100 flex flex-col font-sans selection:bg-orange-500 selection:text-white">
       {/* Navigation Header */}
       <ThanhMenu />
 
       {/* Main Container */}
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10">
-        <MenuDashboard initialMenu={initialMenu} />
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 flex flex-col">
+        <DkChay />
       </main>
 
       {/* Footer */}
@@ -22,7 +17,7 @@ export default async function HomePage() {
         <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
           <p>© {new Date().getFullYear()} Canteen Menu System • Quản lý & Theo dõi Thực đơn Nhà ăn</p>
           <p className="text-slate-400">
-            Hỗ trợ hiển thị Ca Sáng / Ca Chiều • Tự động xen kẽ Tuần 1-3 & Tuần 2-4
+            Tính năng Đăng Ký Cơm Chay
           </p>
         </div>
       </footer>
