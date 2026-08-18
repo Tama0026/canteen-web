@@ -3,9 +3,27 @@
 import React, { useState, useEffect } from 'react';
 import * as ExcelJS from 'exceljs';
 import { saveAs } from 'file-saver';
-import { X, Download, Plus, Trash2, Edit2, Check, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
+import { 
+  X, 
+  Download, 
+  Plus, 
+  Trash2, 
+  Edit2, 
+  Check, 
+  ArrowLeft, 
+  CheckCircle, 
+  AlertCircle, 
+  Leaf,
+  RefreshCw
+} from 'lucide-react';
 import Link from 'next/link';
-import { getDkChayAction, saveDkChayAction } from '@/app/actions/dkchay-actions';
+import { 
+  getDkChayAction, 
+  upsertDkChayAction, 
+  deleteDkChayAction, 
+  saveDkChayAction 
+} from '@/app/actions/dkchay-actions';
+import { getCurrentDateInfo } from '@/lib/menu-helpers';
 
 interface Registration {
   id: string;
@@ -37,22 +55,23 @@ const ToastNotification = ({ message, type, onClose }: { message: string; type: 
   }, [onClose]);
 
   return (
-    <div className={`fixed top-6 right-6 z-[100] overflow-hidden rounded-xl border bg-white dark:bg-slate-900 shadow-2xl min-w-[280px] transition-all duration-300 animate-in slide-in-from-top-4 slide-in-from-right-4 fade-in ${
-      type === 'success' ? 'border-emerald-500 shadow-emerald-500/20' : 'border-red-500 shadow-red-500/20'
-    }`}>
-      <div className="p-4 flex items-center gap-3">
+    <div className={`fixed top-4 right-4 z-50 flex flex-col overflow-hidden rounded-xl shadow-xl border ${
+      type === 'success' ? 'bg-white dark:bg-slate-900 border-emerald-500' : 'bg-white dark:bg-slate-900 border-rose-500'
+    } min-w-[280px]`}>
+      <div className="flex items-center gap-2 p-3">
         {type === 'success' ? (
-          <CheckCircle className="w-5 h-5 text-emerald-500 shrink-0" />
+          <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
         ) : (
-          <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+          <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
         )}
-        <span className={`font-bold text-sm ${type === 'success' ? 'text-emerald-700 dark:text-emerald-400' : 'text-red-700 dark:text-red-400'}`}>
-          {message}
-        </span>
+        <span className="text-xs font-bold text-slate-900 dark:text-white flex-1">{message}</span>
+        <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+          <X className="w-4 h-4" />
+        </button>
       </div>
-      <div className="h-1 w-full bg-slate-100 dark:bg-slate-800">
+      <div className="w-full bg-slate-100 dark:bg-slate-800 h-1">
         <div 
-          className={`h-full transition-all duration-75 ease-linear ${type === 'success' ? 'bg-emerald-500' : 'bg-red-500'}`}
+          className={`h-full transition-all duration-75 ${type === 'success' ? 'bg-emerald-600' : 'bg-rose-600'}`}
           style={{ width: `${progress}%` }}
         />
       </div>
@@ -61,32 +80,38 @@ const ToastNotification = ({ message, type, onClose }: { message: string; type: 
 };
 
 export default function DkChay() {
-  const [statusMessage, setStatusMessage] = useState<{type: 'success' | 'error', text: string} | null>(null);
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [idInput, setIdInput] = useState('');
   const [nameInput, setNameInput] = useState('');
   const [isLunch, setIsLunch] = useState(false);
   const [isDinner, setIsDinner] = useState(false);
-  const [isModalOpen, setIsModalOpen] = useState(false);
-  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
-  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
-  
-  
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [selectedIndices, setSelectedIndices] = useState<number[]>([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [statusMessage, setStatusMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
   const [showIdSuggestions, setShowIdSuggestions] = useState(false);
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [hiddenNames, setHiddenNames] = useState<string[]>([]);
-  const [isSaving, setIsSaving] = useState(false);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
 
-  useEffect(() => {
-    async function loadData() {
+  const loadData = async () => {
+    setIsRefreshing(true);
+    try {
       const dbRegistrations = await getDkChayAction();
-      setRegistrations(dbRegistrations);
+      setRegistrations(dbRegistrations || []);
+    } catch (e) {
+      console.error('Lỗi tải dữ liệu đăng ký chay:', e);
+    } finally {
+      setIsRefreshing(false);
       setIsLoaded(true);
     }
+  };
+
+  useEffect(() => {
     loadData();
 
     const hidIds = localStorage.getItem('canteen_hidden_ids');
@@ -106,19 +131,6 @@ export default function DkChay() {
     }
   }, [hiddenIds, hiddenNames, isLoaded]);
 
-  useEffect(() => {
-    if (isLoaded) {
-      if (isInitialLoad) {
-        setIsInitialLoad(false);
-        return;
-      }
-      setIsSaving(true);
-      saveDkChayAction(registrations).then(() => {
-        setIsSaving(false);
-      });
-    }
-  }, [registrations, isLoaded]);
-
   const openAddModal = () => {
     setIdInput('');
     setNameInput('');
@@ -128,52 +140,45 @@ export default function DkChay() {
     setIsModalOpen(true);
   };
 
-  const handleSave = (e: React.FormEvent) => {
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!idInput || !nameInput || (!isLunch && !isDinner)) return;
+
+    const newReg = {
+      id: idInput.trim(),
+      name: nameInput.toUpperCase().trim(),
+      isLunch,
+      isDinner
+    };
 
     if (editingIndex !== null) {
       const oldReg = registrations[editingIndex];
       if (
-        oldReg.id === idInput &&
-        oldReg.name === nameInput.toUpperCase() &&
-        oldReg.isLunch === isLunch &&
-        oldReg.isDinner === isDinner
+        oldReg.id === newReg.id &&
+        oldReg.name === newReg.name &&
+        oldReg.isLunch === newReg.isLunch &&
+        oldReg.isDinner === newReg.isDinner
       ) {
-        setStatusMessage({ type: 'error', text: 'Sửa không thành công (cần có thông tin thay đổi)' });
+        setStatusMessage({ type: 'error', text: 'Cần có thông tin thay đổi' });
         setIsModalOpen(false);
         setEditingIndex(null);
         return;
       }
-
-      const newRegs = [...registrations];
-      newRegs[editingIndex] = {
-        id: idInput,
-        name: nameInput.toUpperCase(),
-        isLunch,
-        isDinner
-      };
-      setRegistrations(newRegs);
-      setStatusMessage({ type: 'success', text: 'Sửa thành công' });
     } else {
-      const existingIndex = registrations.findIndex(r => r.id === idInput);
+      const existingIndex = registrations.findIndex(r => r.id === newReg.id);
       if (existingIndex >= 0) {
-        setStatusMessage({ type: 'error', text: 'Thêm không thành công (Trùng Mã Số)' });
+        setStatusMessage({ type: 'error', text: 'Mã số nhân viên này đã đăng ký hôm nay' });
         return;
-      } else {
-        setRegistrations([
-          ...registrations,
-          {
-            id: idInput,
-            name: nameInput.toUpperCase(),
-            isLunch,
-            isDinner,
-          }
-        ]);
-        setStatusMessage({ type: 'success', text: 'Thêm thành công' });
       }
     }
-    
+
+    const res = await upsertDkChayAction(newReg);
+    if (res.success) {
+      setStatusMessage({ type: 'success', text: editingIndex !== null ? 'Sửa thành công' : 'Đăng ký thành công' });
+      await loadData();
+    } else {
+      setStatusMessage({ type: 'error', text: 'Lỗi khi lưu dữ liệu' });
+    }
     
     setIdInput('');
     setNameInput('');
@@ -191,13 +196,17 @@ export default function DkChay() {
     setIsModalOpen(true);
   };
 
-  const handleDeleteSelected = () => {
+  const handleDeleteSelected = async () => {
     if (selectedIndices.length > 0) {
-      setRegistrations(registrations.filter((_, i) => !selectedIndices.includes(i)));
-      setSelectedIndices([]);
-      setStatusMessage({ type: 'success', text: 'Xóa thành công' });
-    } else {
-      setStatusMessage({ type: 'error', text: 'Xóa không thành công' });
+      const idsToDelete = selectedIndices.map(i => registrations[i]?.id).filter(Boolean);
+      const res = await deleteDkChayAction(idsToDelete);
+      if (res.success) {
+        setStatusMessage({ type: 'success', text: 'Xóa thành công' });
+        setSelectedIndices([]);
+        await loadData();
+      } else {
+        setStatusMessage({ type: 'error', text: 'Xóa không thành công' });
+      }
     }
   };
 
@@ -381,51 +390,105 @@ export default function DkChay() {
           <div className="flex items-center gap-2 mb-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Xem trang Menu
+              <span>Quay lại Thực đơn</span>
             </Link>
           </div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight uppercase">
-            DANH SÁCH ĐĂNG KÝ CƠM CHAY
-          </h1>
+          <div className="flex flex-wrap items-center gap-2">
+            <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase flex items-center gap-2">
+              <Leaf className="w-4 h-4 text-emerald-600" />
+              <span>Danh Sách Đăng Ký Cơm Chay</span>
+            </h1>
+            <span className="text-[11px] font-semibold px-2 py-0.5 rounded bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
+              Chỉ áp dụng: {getCurrentDateInfo().formattedDate}
+            </span>
+          </div>
         </div>
 
-        <div className="flex items-center gap-3 w-full sm:w-auto">
+        <div className="flex flex-wrap items-center gap-2">
           <button 
             onClick={openAddModal}
-            className="flex items-center gap-2 px-4 py-2 bg-emerald-500 hover:bg-emerald-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            THÊM
+            <Plus className="w-3.5 h-3.5" />
+            <span>Thêm mới</span>
           </button>
           {selectedIndices.length === 1 && (
             <button 
               onClick={() => handleStartEdit(selectedIndices[0])}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
             >
-              <Edit2 className="w-4 h-4" />
-              SỬA
+              <Edit2 className="w-3.5 h-3.5" />
+              <span>Chỉnh sửa</span>
             </button>
           )}
           {selectedIndices.length > 0 && (
             <button 
               onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-red-200 dark:border-red-900/60"
             >
-              <Trash2 className="w-4 h-4" />
-              XÓA
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Xóa</span>
             </button>
           )}
           <button 
+            onClick={loadData}
+            disabled={isRefreshing}
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+            title="Tải lại danh sách đăng ký mới nhất từ server"
+          >
+            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <span>Làm mới</span>
+          </button>
+          <button 
             onClick={handleExport}
             disabled={registrations.length === 0}
-            className="flex items-center gap-2 px-4 py-2 bg-amber-500 hover:bg-amber-600 disabled:bg-slate-400 text-white text-sm font-medium rounded-xl transition-colors shadow-sm"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-700 hover:bg-emerald-800 text-white disabled:opacity-50 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
           >
-            <Download className="w-4 h-4" />
-            Xuất Excel
+            <Download className="w-3.5 h-3.5" />
+            <span>Xuất Excel</span>
           </button>
+        </div>
+      </div>
+
+      {/* 3 Stats Counters */}
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
+              Tổng số đăng ký
+            </span>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
+              {registrations.length}
+            </span>
+          </div>
+          <span className="text-xs font-semibold text-slate-400">người</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
+              Suất ăn ca sáng
+            </span>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
+              {registrations.filter(r => r.isLunch).length}
+            </span>
+          </div>
+          <span className="text-xs font-semibold text-slate-400">suất</span>
+        </div>
+
+        <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
+          <div>
+            <span className="text-xs text-slate-500 dark:text-slate-400 block mb-1">
+              Suất ăn ca chiều
+            </span>
+            <span className="text-xl font-bold text-slate-900 dark:text-white">
+              {registrations.filter(r => r.isDinner).length}
+            </span>
+          </div>
+          <span className="text-xs font-semibold text-slate-400">suất</span>
         </div>
       </div>
 
@@ -438,11 +501,11 @@ export default function DkChay() {
                     <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[10%] text-center">STT</th>
                     <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[20%] text-center">MÃ SỐ</th>
                     <th rowSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[40%] text-center">HỌ VÀ TÊN</th>
-                    <th colSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[30%] text-center">BỮA</th>
+                    <th colSpan={2} className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[30%] text-center">CA ĂN</th>
                   </tr>
                   <tr>
-                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center">TRƯA</th>
-                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center">CHIỀU</th>
+                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center uppercase">CA SÁNG</th>
+                    <th className="px-4 py-2 font-medium text-slate-600 dark:text-slate-400 border border-slate-200 dark:border-slate-700 w-[15%] text-center uppercase">CA CHIỀU</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -573,7 +636,7 @@ export default function DkChay() {
                 </div>
                 
                 <div>
-                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 uppercase">BỮA</label>
+                  <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 uppercase">CHỌN CA ĂN</label>
                   <div className="flex gap-6 mt-1">
                     <label className="flex items-center gap-2.5 cursor-pointer">
                       <input 
@@ -582,16 +645,16 @@ export default function DkChay() {
                         onChange={(e) => setIsLunch(e.target.checked)}
                         className="w-4.5 h-4.5 text-orange-500 focus:ring-orange-500 rounded border-slate-300"
                       />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">TRƯA</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">CA SÁNG</span>
                     </label>
                     <label className="flex items-center gap-2.5 cursor-pointer">
                       <input 
                         type="checkbox" 
                         checked={isDinner}
                         onChange={(e) => setIsDinner(e.target.checked)}
-                        className="w-4.5 h-4.5 text-blue-500 focus:ring-blue-500 rounded border-slate-300"
+                        className="w-4.5 h-4.5 text-indigo-500 focus:ring-indigo-500 rounded border-slate-300"
                       />
-                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">CHIỀU</span>
+                      <span className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">CA CHIỀU</span>
                     </label>
                   </div>
                 </div>

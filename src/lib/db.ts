@@ -251,8 +251,12 @@ export async function getDkChayRegistrations(today: string) {
   }
   try {
     await initDatabaseSchema();
-    await sql`DELETE FROM canteen_dkchay WHERE reg_date != ${today}`;
-    const rows = await sql`SELECT id, name, is_lunch, is_dinner FROM canteen_dkchay WHERE reg_date = ${today}`;
+    const rows = await sql`
+      SELECT id, name, is_lunch, is_dinner 
+      FROM canteen_dkchay 
+      WHERE reg_date = ${today}
+      ORDER BY id ASC
+    `;
     return rows.map((r: any) => ({
       id: r.id,
       name: r.name,
@@ -262,6 +266,63 @@ export async function getDkChayRegistrations(today: string) {
   } catch(e) {
     console.error('Lỗi getDkChayRegistrations:', e);
     return [];
+  }
+}
+
+export async function upsertSingleRegistration(
+  reg: { id: string; name: string; isLunch: boolean; isDinner: boolean }, 
+  today: string
+): Promise<boolean> {
+  const sql = getSql();
+  if (!sql) {
+    if (localDkChayCache.date !== today) {
+      localDkChayCache = { date: today, registrations: [] };
+    }
+    const idx = localDkChayCache.registrations.findIndex(r => r.id === reg.id);
+    if (idx >= 0) {
+      localDkChayCache.registrations[idx] = reg;
+    } else {
+      localDkChayCache.registrations.push(reg);
+    }
+    return true;
+  }
+
+  try {
+    await initDatabaseSchema();
+    await sql`
+      INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date)
+      VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today})
+      ON CONFLICT (id, reg_date)
+      DO UPDATE SET
+        name = EXCLUDED.name,
+        is_lunch = EXCLUDED.is_lunch,
+        is_dinner = EXCLUDED.is_dinner;
+    `;
+    return true;
+  } catch (e) {
+    console.error('Lỗi upsertSingleRegistration:', e);
+    return false;
+  }
+}
+
+export async function deleteRegistrationsByIds(ids: string[], today: string): Promise<boolean> {
+  const sql = getSql();
+  if (!sql) {
+    if (localDkChayCache.date === today) {
+      localDkChayCache.registrations = localDkChayCache.registrations.filter(r => !ids.includes(r.id));
+    }
+    return true;
+  }
+
+  try {
+    await initDatabaseSchema();
+    for (const id of ids) {
+      await sql`DELETE FROM canteen_dkchay WHERE id = ${id} AND reg_date = ${today}`;
+    }
+    return true;
+  } catch (e) {
+    console.error('Lỗi deleteRegistrationsByIds:', e);
+    return false;
   }
 }
 
@@ -276,7 +337,14 @@ export async function saveDkChayRegistrations(registrations: any[], today: strin
     await sql`DELETE FROM canteen_dkchay WHERE reg_date = ${today}`;
     if (registrations.length > 0) {
       for (const reg of registrations) {
-        await sql`INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date) VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today})`;
+        await sql`
+          INSERT INTO canteen_dkchay (id, name, is_lunch, is_dinner, reg_date) 
+          VALUES (${reg.id}, ${reg.name}, ${reg.isLunch}, ${reg.isDinner}, ${today})
+          ON CONFLICT (id, reg_date) DO UPDATE SET
+            name = EXCLUDED.name,
+            is_lunch = EXCLUDED.is_lunch,
+            is_dinner = EXCLUDED.is_dinner;
+        `;
       }
     }
     return true;

@@ -287,31 +287,31 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
                 placeholder="Nhập mã PIN (Mặc định: 123456)"
                 value={pinCode}
                 onChange={(e) => setPinCode(e.target.value)}
-                className="w-full pl-12 pr-4 py-4 rounded-2xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 placeholder:tracking-normal placeholder:text-base text-center text-xl font-mono tracking-[0.25em] focus:outline-none focus:ring-2 focus:ring-amber-500 transition-all shadow-inner"
+                className="w-full pl-10 pr-4 py-2.5 rounded-lg bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white placeholder-slate-400 text-center text-sm font-mono tracking-widest focus:outline-none focus:border-slate-400 transition-all"
                 autoFocus
               />
-              <KeyRound className="w-6 h-6 text-slate-400 absolute left-4 top-4" />
+              <KeyRound className="w-4 h-4 text-slate-400 absolute left-3 top-3" />
             </div>
             {authError && (
-              <p className="text-xs text-red-500 font-semibold mt-2">{authError}</p>
+              <p className="text-xs text-red-500 font-medium mt-1.5">{authError}</p>
             )}
           </div>
 
           <button
             type="submit"
-            className="w-full py-4 rounded-2xl bg-gradient-to-r from-amber-500 to-orange-500 hover:from-amber-600 hover:to-orange-600 text-white font-bold text-base shadow-lg shadow-orange-500/25 transition-all hover:scale-[1.02] active:scale-[0.98]"
+            className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold transition-all cursor-pointer"
           >
             Mở Khóa Quản Trị
           </button>
         </form>
 
-        <div className="pt-4 border-t border-slate-100 dark:border-slate-800">
+        <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
           <Link
             href="/"
-            className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white"
+            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
           >
             <ArrowLeft className="w-3.5 h-3.5" />
-            Quay lại trang xem thực đơn
+            <span>Quay lại trang xem thực đơn</span>
           </Link>
         </div>
       </div>
@@ -319,19 +319,19 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
   }
 
   return (
-    <div className="space-y-6 sm:space-y-8">
+    <div className="space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
           <div className="flex items-center gap-2 mb-1">
             <Link
               href="/"
-              className="inline-flex items-center gap-1 text-xs font-semibold text-indigo-600 dark:text-indigo-400 hover:underline"
+              className="inline-flex items-center gap-1 text-xs font-semibold text-slate-500 hover:text-slate-900 dark:hover:text-white"
             >
               <ArrowLeft className="w-3.5 h-3.5" />
-              Xem trang Menu
+              <span>Quay lại Thực đơn</span>
             </Link>
           </div>
-          <h1 className="text-lg sm:text-xl font-bold text-slate-900 dark:text-white tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase">
             Bảng Quản Trị Thực Đơn Nhà Ăn
           </h1>
         </div>
@@ -340,7 +340,7 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
           <button
             onClick={handleResetToDefault}
             disabled={isSaving}
-            className="px-3.5 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors"
+            className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
           >
             <RotateCcw className="w-3.5 h-3.5 text-red-500" />
             <span>Khôi phục gốc</span>
@@ -348,7 +348,7 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
 
           <button
             onClick={() => setIsAuthenticated(false)}
-            className="px-3.5 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold transition-colors"
+            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold transition-colors cursor-pointer"
           >
             Đăng xuất
           </button>
@@ -363,9 +363,9 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
         />
       )}
 
-      <div className="p-5 sm:p-6 rounded-3xl bg-gradient-to-r from-emerald-50 to-teal-50 dark:from-slate-800/80 dark:to-emerald-950/40 border border-emerald-200/80 dark:border-emerald-800/40 shadow-sm space-y-4">
+      <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-emerald-600 text-white shadow-md shadow-emerald-500/20">
+          <div className="p-2 rounded-xl bg-emerald-700 text-white">
             <FileSpreadsheet className="w-5 h-5" />
           </div>
           <div>
@@ -373,7 +373,7 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
               Cập Nhật Nhanh Bằng File Excel
             </h3>
             <p className="text-xs text-slate-500 dark:text-slate-400">
-              Chọn file Excel có 2 sheet <code className="font-semibold text-indigo-600">TUẦN 1 - 3</code> và <code className="font-semibold text-indigo-600">TUẦN 2 - 4</code> để tự động ghi đè thực đơn vào Database
+              Chọn file Excel có 2 sheet <code className="font-bold text-slate-900 dark:text-white">TUẦN 1 - 3</code> và <code className="font-bold text-slate-900 dark:text-white">TUẦN 2 - 4</code> để tự động ghi đè thực đơn vào Database
             </p>
           </div>
         </div>
@@ -381,10 +381,10 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
         <div className="flex flex-col sm:flex-row items-center gap-3">
           <button
             onClick={() => setShowUploadModal(true)}
-            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
+            className="w-full sm:w-auto px-5 py-2.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer"
           >
             <Upload className="w-4 h-4" />
-            <span>Choose File</span>
+            <span>Choose File Excel</span>
           </button>
         </div>
       </div>
@@ -534,20 +534,20 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
         </div>
       )}
 
-      <div className="p-5 sm:p-7 rounded-3xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-6">
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-5 border-b border-slate-100 dark:border-slate-800">
+      <div className="p-5 sm:p-6 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-6">
+        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
           <div>
-            <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2 uppercase">
-              1. Chọn Chu Kỳ Tuần:
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+              1. Chu Kỳ Tuần:
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setSelectedCycle('cycle_1_3')}
-                className={`px-4 py-2 rounded-xl text-xs transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
                   selectedCycle === 'cycle_1_3'
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25 scale-[1.02] font-extrabold'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 font-medium hover:text-slate-900'
                 }`}
               >
                 TUẦN 1 - 3
@@ -555,10 +555,10 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
               <button
                 type="button"
                 onClick={() => setSelectedCycle('cycle_2_4')}
-                className={`px-4 py-2 rounded-xl text-xs transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
                   selectedCycle === 'cycle_2_4'
-                    ? 'bg-gradient-to-r from-blue-500 to-cyan-500 text-white shadow-md shadow-blue-500/25 scale-[1.02] font-extrabold'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-medium'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 font-medium hover:text-slate-900'
                 }`}
               >
                 TUẦN 2 - 4
@@ -567,47 +567,47 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2 uppercase">
-              2. Chọn Ca:
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
+              2. Ca Ăn:
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setSelectedShift('morning')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
                   selectedShift === 'morning'
-                    ? 'bg-gradient-to-r from-amber-500 to-orange-500 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                 }`}
               >
-                Ăn trưa
+                Ca Trưa
               </button>
               <button
                 type="button"
                 onClick={() => setSelectedShift('afternoon')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
                   selectedShift === 'afternoon'
-                    ? 'bg-gradient-to-r from-indigo-700 to-slate-800 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                 }`}
               >
-                Ăn chiều
+                Ca Chiều
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-slate-900 dark:text-white mb-2 uppercase">
+            <label className="block text-xs font-semibold text-slate-500 dark:text-slate-400 mb-2 uppercase tracking-wider">
               3. Loại Món:
             </label>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 p-0.5 rounded-lg bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
                 type="button"
                 onClick={() => setSelectedMealType('regular')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
                   selectedMealType === 'regular'
-                    ? 'bg-amber-600 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                 }`}
               >
                 Món Mặn
@@ -615,10 +615,10 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
               <button
                 type="button"
                 onClick={() => setSelectedMealType('vegetarian')}
-                className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
+                className={`px-3 py-1.5 rounded-md text-xs transition-all cursor-pointer ${
                   selectedMealType === 'vegetarian'
-                    ? 'bg-emerald-600 text-white shadow-sm'
-                    : 'bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300'
+                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs font-semibold'
+                    : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                 }`}
               >
                 Món Chay

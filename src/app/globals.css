@@ -1,14 +1,16 @@
 @import "tailwindcss";
 
 :root {
-  --background: #f8fafc;
-  --foreground: #0f172a;
+  --background: #F8FAFC;
+  --foreground: #0F172A;
+  --primary: #0F172A;
+  --accent: #0284C7;
 }
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --background: #020617;
-    --foreground: #f8fafc;
+    --background: #0B0F19;
+    --foreground: #F8FAFC;
   }
 }
 
@@ -29,10 +31,14 @@ body {
 }
 
 ::-webkit-scrollbar-thumb {
-  background: rgba(148, 163, 184, 0.4);
+  background: #CBD5E1;
   border-radius: 9999px;
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(148, 163, 184, 0.7);
+  background: #94A3B8;
 }
