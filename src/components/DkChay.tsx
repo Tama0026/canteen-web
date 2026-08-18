@@ -403,7 +403,6 @@ export default function DkChay() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase flex items-center gap-2">
-              <Leaf className="w-4 h-4 text-emerald-600" />
               <span>Danh Sách Đăng Ký Cơm Chay</span>
             </h1>
             <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
@@ -416,7 +415,7 @@ export default function DkChay() {
         <div className="flex flex-wrap items-center gap-2">
           <button 
             onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-blue-900/20"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm mới</span>
@@ -424,7 +423,7 @@ export default function DkChay() {
           {selectedIndices.length === 1 && (
             <button 
               onClick={() => handleStartEdit(selectedIndices[0])}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-amber-900/20"
             >
               <Edit2 className="w-3.5 h-3.5" />
               <span>Chỉnh sửa</span>
@@ -433,7 +432,7 @@ export default function DkChay() {
           {selectedIndices.length > 0 && (
             <button 
               onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-red-200 dark:border-red-900/60"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-red-900/20"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Xóa</span>
@@ -442,10 +441,10 @@ export default function DkChay() {
           <button 
             onClick={loadData}
             disabled={isRefreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-sky-900/20"
             title="Tải lại danh sách đăng ký mới nhất từ server"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-white ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Làm mới</span>
           </button>
           <button 

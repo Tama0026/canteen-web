@@ -252,7 +252,7 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
 
 
   const handleResetToDefault = async () => {
-    if (!confirm('Bạn có chắc chắn muốn khôi phục toàn bộ thực đơn về bản gốc ban đầu?')) {
+    if (!confirm('Bạn có chắc chắn muốn làm trống toàn bộ thực đơn?')) {
       return;
     }
     setIsSaving(true);
@@ -306,12 +306,9 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
         </form>
 
         <div className="pt-3 border-t border-slate-100 dark:border-slate-800">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-900 dark:hover:text-white"
-          >
-            <ArrowLeft className="w-3.5 h-3.5" />
-            <span>Quay lại trang xem thực đơn</span>
+          <Link href="/" className="inline-flex items-center gap-2 text-sm text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors">
+            <ArrowLeft className="w-4 h-4" />
+            <span>Quay lại Thực đơn</span>
           </Link>
         </div>
       </div>
@@ -340,15 +337,15 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
           <button
             onClick={handleResetToDefault}
             disabled={isSaving}
-            className="px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold flex items-center gap-1.5 border border-slate-200 dark:border-slate-700 transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold flex items-center gap-1.5 transition-colors cursor-pointer disabled:opacity-50 shadow-sm shadow-emerald-900/20"
           >
-            <RotateCcw className="w-3.5 h-3.5 text-red-500" />
+            <RotateCcw className="w-3.5 h-3.5" />
             <span>Khôi phục gốc</span>
           </button>
 
           <button
             onClick={() => setIsAuthenticated(false)}
-            className="px-3 py-1.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold transition-colors cursor-pointer"
+            className="px-3 py-1.5 rounded-lg bg-red-600 hover:bg-red-700 text-white text-xs font-semibold transition-colors cursor-pointer shadow-sm shadow-red-900/20"
           >
             Đăng xuất
           </button>
@@ -365,9 +362,6 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
 
       <div className="p-5 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 space-y-4">
         <div className="flex items-center gap-2.5">
-          <div className="p-2 rounded-xl bg-emerald-700 text-white">
-            <FileSpreadsheet className="w-5 h-5" />
-          </div>
           <div>
             <h3 className="text-base font-bold text-slate-900 dark:text-white">
               Cập Nhật Nhanh Bằng File Excel
@@ -580,7 +574,7 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
                     : 'text-slate-600 dark:text-slate-300 hover:text-slate-900'
                 }`}
               >
-                Ca Trưa
+                Ca Sáng
               </button>
               <button
                 type="button"

@@ -13,23 +13,20 @@ export default function ThanhMenu() {
         <div className="flex items-center justify-between h-14 sm:h-16">
           {/* Logo & Corporate Title */}
           <Link href="/" className="flex items-center gap-3 group">
-            <div className="h-9 sm:h-10 w-auto min-w-[36px] max-w-[180px] rounded-xl overflow-hidden shrink-0 border border-slate-200/80 dark:border-slate-700/80 bg-white dark:bg-slate-800 p-1 flex items-center justify-center shadow-2xs">
+            <div className="h-12 sm:h-14 w-12 sm:w-14 rounded-full overflow-hidden shrink-0 flex items-center justify-center">
               <img 
                 src="/icon.png" 
                 alt="Simone Logo" 
-                className="h-full w-auto max-w-full object-contain" 
+                className="h-full w-full object-cover" 
               />
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <span className="font-extrabold text-sm sm:text-base text-slate-900 dark:text-white tracking-tight uppercase">
+                <span className="font-extrabold text-xl sm:text-2xl text-slate-900 dark:text-white tracking-tight uppercase">
                   SIMONE TG1
                 </span>
-                <span className="hidden sm:inline-block text-[10px] font-bold px-2 py-0.5 rounded-md bg-[#FEF0D6] dark:bg-amber-950/60 text-amber-950 dark:text-amber-200 border border-amber-200 dark:border-amber-800">
-                  CANTEEN PORTAL
-                </span>
               </div>
-              <span className="text-[11px] text-slate-500 dark:text-slate-400 hidden sm:block font-medium">
+              <span className="text-xs sm:text-sm text-slate-500 dark:text-slate-400 hidden sm:block font-medium">
                 Hệ thống tra cứu & quản lý thực đơn nhà ăn
               </span>
             </div>
@@ -41,11 +38,11 @@ export default function ThanhMenu() {
               href="/dk-chay"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 pathname === '/dk-chay'
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                  ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
               }`}
             >
-              <Leaf className="w-3.5 h-3.5 text-emerald-600" />
+              <Leaf className={`w-3.5 h-3.5 ${pathname === '/dk-chay' ? 'text-pink-600 dark:text-pink-400' : 'text-emerald-600'}`} />
               <span>Đăng Ký Cơm Chay</span>
             </Link>
 
@@ -53,11 +50,11 @@ export default function ThanhMenu() {
               href="/admin"
               className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
                 pathname === '/admin'
-                  ? 'bg-slate-900 text-white dark:bg-white dark:text-slate-900'
+                  ? 'bg-pink-100 text-pink-700 dark:bg-pink-900/40 dark:text-pink-300 shadow-sm'
                   : 'text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
               }`}
             >
-              <Shield className="w-3.5 h-3.5 text-slate-400" />
+              <Shield className={`w-3.5 h-3.5 ${pathname === '/admin' ? 'text-pink-600 dark:text-pink-400' : 'text-slate-400'}`} />
               <span>Quản Trị</span>
             </Link>
           </div>

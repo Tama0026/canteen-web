@@ -37,7 +37,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
   const [selectedWeek, setSelectedWeek] = useState<WeekNumber>(dateInfo.weekNumber);
   const [selectedDay, setSelectedDay] = useState<DayKey>(dateInfo.dayKey);
   const [viewFilter, setViewFilter] = useState<'all' | 'morning' | 'afternoon'>('all');
-  const [displayMode, setDisplayMode] = useState<'focus' | 'table'>('table');
   const [searchQuery, setSearchQuery] = useState<string>('');
 
   const cycleKey = getCycleForWeek(selectedWeek);
@@ -106,99 +105,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
     return results;
   }, [searchQuery, initialMenu]);
 
-  // Render Meal Tray Card (Focus Mode) - Slim & Elegant Pastel
-  const renderDishTrayCard = (
-    shift: ShiftKey,
-    mealType: MealTypeKey,
-    title: string,
-    isVeg: boolean
-  ) => {
-    const item = initialMenu[cycleKey]?.[shift]?.[mealType]?.[selectedDay];
-    const eff1 = getEffectiveDish(item?.mainDish1, selectedWeek);
-    const eff2 = getEffectiveDish(item?.mainDish2, selectedWeek);
 
-    return (
-      <div className={`rounded-xl border transition-all overflow-hidden flex flex-col justify-between ${
-        isVeg
-          ? 'bg-[#F4FBF7] dark:bg-emerald-950/20 border-emerald-200/70 dark:border-emerald-800/60 shadow-2xs'
-          : 'bg-[#FEF9F0] dark:bg-amber-950/20 border-amber-200/70 dark:border-amber-800/60 shadow-2xs'
-      }`}>
-        {/* Tray Header */}
-        <div className={`px-3.5 py-2.5 border-b flex items-center justify-between ${
-          isVeg
-            ? 'bg-[#E6F4EA]/80 dark:bg-emerald-950/50 border-emerald-200/60 dark:border-emerald-800 text-emerald-950 dark:text-emerald-200'
-            : 'bg-[#FEF0D6]/80 dark:bg-amber-950/50 border-amber-200/60 dark:border-amber-800 text-amber-950 dark:text-amber-200'
-        }`}>
-          <span className="font-bold text-xs uppercase tracking-wide">
-            {title}
-          </span>
-        </div>
-
-        {/* Compartment 1: MÓN CHÍNH TRỌNG TÂM */}
-        <div className="p-3.5 space-y-3 flex-1">
-          <div className={`p-3 rounded-lg border bg-white dark:bg-slate-900/90 ${
-            isVeg
-              ? 'border-emerald-200/80 dark:border-emerald-800/60 shadow-2xs'
-              : 'border-amber-200/80 dark:border-amber-800/60 shadow-2xs'
-          }`}>
-            <div className="flex items-center justify-between mb-1">
-              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded tracking-wider uppercase border ${
-                isVeg
-                  ? 'bg-[#CEEAD6]/80 text-emerald-900 border-emerald-300 dark:bg-emerald-900/60 dark:text-emerald-200 dark:border-emerald-700'
-                  : 'bg-[#FDE293]/80 text-amber-950 border-amber-300 dark:bg-amber-900/60 dark:text-amber-200 dark:border-amber-700'
-              }`}>
-                Món Chính
-              </span>
-            </div>
-
-            <div className="space-y-1.5">
-              <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white capitalize tracking-tight leading-snug">
-                {eff1.name || '—'}
-              </div>
-              {eff2.name && (
-                <div className="text-sm sm:text-base font-bold text-slate-900 dark:text-white capitalize tracking-tight leading-snug pt-1.5 border-t border-slate-100 dark:border-slate-800">
-                  {eff2.name}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Compartment 2: 3 NGĂN PHỤ (XÀO / CANH / TRÁNG MIỆNG) */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-            {/* Ngăn Xào */}
-            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5 shadow-2xs">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 block">
-                Món Xào
-              </span>
-              <p className="font-semibold text-xs text-slate-800 dark:text-slate-200 capitalize truncate" title={item?.sideDish}>
-                {item?.sideDish || '—'}
-              </p>
-            </div>
-
-            {/* Ngăn Canh */}
-            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5 shadow-2xs">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 block">
-                Canh
-              </span>
-              <p className="font-semibold text-xs text-slate-800 dark:text-slate-200 capitalize truncate" title={item?.soup}>
-                {item?.soup || '—'}
-              </p>
-            </div>
-
-            {/* Ngăn Tráng Miệng */}
-            <div className="p-2.5 rounded-lg bg-white dark:bg-slate-900 border border-slate-200/80 dark:border-slate-800 space-y-0.5 shadow-2xs">
-              <span className="text-[9px] font-bold uppercase tracking-wide text-slate-400 block">
-                Tráng Miệng
-              </span>
-              <p className="font-semibold text-xs text-slate-800 dark:text-slate-200 capitalize truncate" title={item?.dessert}>
-                {item?.dessert || '—'}
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  };
 
   // Render a Single Matrix Table Block (For Table View Mode)
   const renderTableBlock = (
@@ -219,27 +126,29 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
         <div className="overflow-x-auto">
           <table className="w-full text-xs text-center border-collapse min-w-[850px] table-fixed">
             <thead>
-              <tr className="bg-[#FFF8E7] dark:bg-amber-950/30 text-slate-800 dark:text-amber-200 font-bold border-b border-slate-300 dark:border-slate-700">
+              <tr className={`${shift === 'morning' ? 'bg-[#FFF8E7] dark:bg-amber-950/30 text-slate-800 dark:text-amber-200' : 'bg-[#EEF2FF] dark:bg-indigo-950/30 text-[#3730A3] dark:text-indigo-200'} font-bold border-b border-slate-300 dark:border-slate-700`}>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-slate-700 w-[8%]">CA</th>
                 <th className="py-2.5 px-1 border-r border-slate-300 dark:border-slate-700 w-[6%]">TUẦN</th>
                 <th className="py-2.5 px-2 border-r border-slate-300 dark:border-slate-700 w-[11%] uppercase">
                   {mealTypeLabel}
                 </th>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
                   return (
                     <th
                       key={d}
                       className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 font-bold w-[12.5%] transition-colors ${
                         isToday
-                          ? 'bg-[#FDE293] text-amber-950 dark:bg-amber-900/80 dark:text-amber-100 font-black'
+                          ? shift === 'morning'
+                            ? 'bg-[#FDE293] text-amber-950 dark:bg-amber-900/80 dark:text-amber-100 font-black'
+                            : 'bg-[#C7D2FE] text-indigo-950 dark:bg-indigo-900/80 dark:text-indigo-100 font-black'
                           : ''
                       }`}
                     >
                       <div className="flex flex-col items-center justify-center">
                         <span>{DAY_NAMES[d].vi}</span>
                         {isToday && (
-                          <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-800 dark:text-amber-200">
+                          <span className={`text-[9px] font-extrabold uppercase tracking-wider ${shift === 'morning' ? 'text-amber-800 dark:text-amber-200' : 'text-[#3730A3] dark:text-indigo-200'}`}>
                             (Hôm nay)
                           </span>
                         )}
@@ -263,17 +172,21 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                 {DAY_KEYS.map((d) => {
                   const item = initialMenu[cycleKey]?.[shift]?.[mealType]?.[d];
                   const eff = getEffectiveDish(item?.mainDish1, selectedWeek);
+                  const hasDish1 = Boolean(eff.name && eff.name.trim());
                   const hasDish2 = Boolean(item?.mainDish2 && item.mainDish2.trim());
-                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                  
+                  const shouldMerge = hasAnyMainDish2 && hasDish1 && !hasDish2;
+
                   return (
                     <td
                       key={d}
-                      rowSpan={hasAnyMainDish2 && !hasDish2 ? 2 : 1}
+                      rowSpan={shouldMerge ? 2 : 1}
                       className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 font-bold capitalize align-middle break-words ${
-                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                        isToday ? (shift === 'morning' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-indigo-50 dark:bg-indigo-950/20') : ''
                       }`}
                     >
-                      {eff.name || '—'}
+                      {eff.name || ''}
                     </td>
                   );
                 })}
@@ -282,18 +195,23 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                 <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                   {DAY_KEYS.map((d) => {
                     const item = initialMenu[cycleKey]?.[shift]?.[mealType]?.[d];
+                    const eff1 = getEffectiveDish(item?.mainDish1, selectedWeek);
+                    const hasDish1 = Boolean(eff1.name && eff1.name.trim());
                     const hasDish2 = Boolean(item?.mainDish2 && item.mainDish2.trim());
-                    if (!hasDish2) return null;
+                    
+                    const shouldMerge = hasAnyMainDish2 && hasDish1 && !hasDish2;
+                    if (shouldMerge) return null;
+
                     const eff2 = getEffectiveDish(item?.mainDish2, selectedWeek);
-                    const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                    const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
                     return (
                       <td
                         key={d}
                         className={`py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 font-bold capitalize text-slate-800 dark:text-slate-200 align-middle break-words ${
-                          isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                          isToday ? (shift === 'morning' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-indigo-50 dark:bg-indigo-950/20') : ''
                         }`}
                       >
-                        {eff2.name}
+                        {eff2.name || ''}
                       </td>
                     );
                   })}
@@ -302,15 +220,15 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Xào</td>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
                   return (
                     <td
                       key={d}
                       className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 capitalize align-middle ${
-                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                        isToday ? (shift === 'morning' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-indigo-50 dark:bg-indigo-950/20') : ''
                       }`}
                     >
-                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.sideDish || '—'}
+                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.sideDish || ''}
                     </td>
                   );
                 })}
@@ -318,15 +236,15 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Canh</td>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
                   return (
                     <td
                       key={d}
                       className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 capitalize align-middle ${
-                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                        isToday ? (shift === 'morning' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-indigo-50 dark:bg-indigo-950/20') : ''
                       }`}
                     >
-                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.soup || '—'}
+                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.soup || ''}
                     </td>
                   );
                 })}
@@ -334,39 +252,41 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Tráng miệng</td>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
                   return (
                     <td
                       key={d}
                       className={`py-2 px-2 border-r border-slate-300 dark:border-slate-700 capitalize align-middle ${
-                        isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                        isToday ? (shift === 'morning' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-indigo-50 dark:bg-indigo-950/20') : ''
                       }`}
                     >
-                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.dessert || '—'}
+                      {initialMenu[cycleKey]?.[shift]?.[mealType]?.[d]?.dessert || ''}
                     </td>
                   );
                 })}
               </tr>
-              {mealType === 'vegetarian' && (
+              {mealType === 'vegetarian' && Number(selectedWeek) === Number(dateInfo.weekNumber) && (
                 <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                   <td className="py-2 px-2 font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">
                     Đăng Ký
                   </td>
                   {DAY_KEYS.map((d) => {
-                    const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
+                    const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
                     return (
                       <td
                         key={d}
                         className={`py-1.5 px-2 border-r border-slate-300 dark:border-slate-700 align-middle text-center ${
-                          isToday ? 'bg-[#FFFDF0] dark:bg-amber-950/20' : ''
+                          isToday ? (shift === 'morning' ? 'bg-amber-50 dark:bg-amber-950/20' : 'bg-indigo-50 dark:bg-indigo-950/20') : ''
                         }`}
                       >
-                        <Link
-                          href="/dk-chay"
-                          className="inline-flex items-center justify-center w-[85%] py-1.5 px-3 rounded-md bg-[#007A5A] hover:bg-[#006046] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
-                        >
-                          ĐK
-                        </Link>
+                        {isToday && (
+                          <Link
+                            href="/dk-chay"
+                            className="inline-flex items-center justify-center w-[85%] py-1.5 px-3 rounded-md bg-[#007A5A] hover:bg-[#006046] text-white text-xs font-bold shadow-2xs transition-colors cursor-pointer"
+                          >
+                            ĐK
+                          </Link>
+                        )}
                       </td>
                     );
                   })}
@@ -395,32 +315,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               Hôm nay: {dateInfo.formattedDate}
             </span>
           </div>
-
-          <div className="flex items-center gap-2">
-            {/* View Mode Switcher */}
-            <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              <button
-                onClick={() => setDisplayMode('table')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${displayMode === 'table'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-              >
-                <TableIcon className="w-3.5 h-3.5 text-indigo-600" />
-                <span>Bảng Tuần</span>
-              </button>
-              <button
-                onClick={() => setDisplayMode('focus')}
-                className={`px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 transition-all cursor-pointer ${displayMode === 'focus'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                  }`}
-              >
-                <LayoutGrid className="w-3.5 h-3.5 text-amber-600" />
-                <span>Hôm Nay</span>
-              </button>
-            </div>
-          </div>
         </div>
 
         {/* Row 2: Selectors & Filters */}
@@ -428,18 +322,25 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
           <div className="flex flex-wrap items-center gap-3">
             {/* Week Selector */}
             <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
-              {([1, 2, 3, 4] as WeekNumber[]).map((w) => (
+              {([1, 2, 3, 4] as WeekNumber[]).map((w) => {
+                const isCurrentWeek = w === dateInfo.weekNumber;
+                return (
                 <button
                   key={w}
                   onClick={() => setSelectedWeek(w)}
-                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${selectedWeek === w
-                      ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
-                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'
-                    }`}
+                  className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer flex items-center gap-1 ${
+                    selectedWeek === w
+                      ? isCurrentWeek
+                        ? 'bg-sky-100 dark:bg-sky-900/50 text-slate-900 dark:text-sky-100 shadow-xs ring-1 ring-sky-300 dark:ring-sky-700'
+                        : 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                      : isCurrentWeek
+                        ? 'bg-sky-50 dark:bg-sky-900/20 text-slate-900 dark:text-sky-400 hover:bg-sky-100 dark:hover:bg-sky-900/40'
+                        : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-white/50 dark:hover:bg-slate-800/50'
+                  }`}
                 >
-                  Tuần {w}
+                  Tuần {w} {isCurrentWeek && '(HT)'}
                 </button>
-              ))}
+              )})}
             </div>
 
             {/* Shift Filter: CA SÁNG / CA CHIỀU */}
@@ -456,7 +357,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <button
                 onClick={() => setViewFilter('morning')}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewFilter === 'morning'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    ? 'bg-[#FFF8E7] dark:bg-amber-900/50 text-amber-900 dark:text-amber-100 shadow-xs ring-1 ring-[#FDE293] dark:ring-amber-700'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
               >
@@ -465,7 +366,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <button
                 onClick={() => setViewFilter('afternoon')}
                 className={`px-3 py-1 rounded-lg text-xs font-bold transition-all cursor-pointer ${viewFilter === 'afternoon'
-                    ? 'bg-white dark:bg-slate-900 text-slate-900 dark:text-white shadow-xs'
+                    ? 'bg-[#EEF2FF] dark:bg-indigo-900/50 text-indigo-900 dark:text-indigo-100 shadow-xs ring-1 ring-[#C7D2FE] dark:ring-indigo-700'
                     : 'text-slate-500 hover:text-slate-900 dark:hover:text-white'
                   }`}
               >
@@ -518,81 +419,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
         </div>
       )}
 
-      {/* MODE 1: MODERN DAY FOCUS HERO VIEW */}
-      {displayMode === 'focus' && (
-        <div className="space-y-4">
-          {/* Interactive Weekday Strip - Slim Minimalist */}
-          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {DAY_KEYS.map((d) => {
-              const isSelected = selectedDay === d;
 
-              return (
-                <button
-                  key={d}
-                  onClick={() => setSelectedDay(d)}
-                  className={`py-2.5 px-3 rounded-xl border text-center transition-all cursor-pointer font-bold text-xs sm:text-sm ${
-                    isSelected
-                      ? 'bg-[#FFF8E7] dark:bg-amber-950/40 border-amber-300 dark:border-amber-700 text-amber-950 dark:text-amber-200 shadow-2xs'
-                      : 'bg-white dark:bg-slate-900 text-slate-700 dark:text-slate-300 border-slate-200/80 dark:border-slate-800 hover:border-slate-300 dark:hover:border-slate-700'
-                  }`}
-                >
-                  {DAY_NAMES[d].vi}
-                </button>
-              );
-            })}
-          </div>
-
-          {/* Selected Day Main Canvas */}
-          <div className="space-y-4">
-            {/* Quick Registration Button for Today */}
-            {isSelectedDayToday && (
-              <div className="flex justify-end">
-                <Link
-                  href="/dk-chay"
-                  className="inline-flex items-center justify-center w-full sm:w-auto px-4 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs sm:text-sm font-bold transition-all shadow-2xs cursor-pointer"
-                >
-                  Đăng Ký Suất Ăn Chay Hôm Nay
-                </Link>
-              </div>
-            )}
-
-            {/* CA SÁNG SECTION */}
-            {(viewFilter === 'all' || viewFilter === 'morning') && (
-              <div className="space-y-2.5">
-                <div className="px-1">
-                  <span className="font-extrabold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    CA SÁNG
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {renderDishTrayCard('morning', 'regular', 'Món Mặn Ca Sáng', false)}
-                  {renderDishTrayCard('morning', 'vegetarian', 'Món Chay Ca Sáng', true)}
-                </div>
-              </div>
-            )}
-
-            {/* CA CHIỀU SECTION */}
-            {(viewFilter === 'all' || viewFilter === 'afternoon') && (
-              <div className="space-y-2.5 pt-1.5">
-                <div className="px-1">
-                  <span className="font-extrabold text-sm text-slate-800 dark:text-slate-200 uppercase tracking-wider">
-                    CA CHIỀU
-                  </span>
-                </div>
-
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                  {renderDishTrayCard('afternoon', 'regular', 'Món Mặn Ca Chiều', false)}
-                  {renderDishTrayCard('afternoon', 'vegetarian', 'Món Chay Ca Chiều', true)}
-                </div>
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
-      {/* MODE 2: EXCEL-STYLE WEEKLY MATRIX TABLE VIEW */}
-      {displayMode === 'table' && (
         <div className="space-y-8">
           {(viewFilter === 'all' || viewFilter === 'morning') && (
             <div className="space-y-3.5">
@@ -617,7 +444,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
             </div>
           )}
         </div>
-      )}
     </div>
   );
 }

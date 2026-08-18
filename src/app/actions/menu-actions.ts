@@ -59,12 +59,40 @@ export async function importExcelMenuAction(formData: FormData) {
 }
 
 
+function createEmptyMenu(): FullMenuDatabase {
+  const emptyDay = { mainDish1: '', mainDish2: '', sideDish: '', soup: '', dessert: '' };
+  const emptyMealType = {
+    monday: { ...emptyDay },
+    tuesday: { ...emptyDay },
+    wednesday: { ...emptyDay },
+    thursday: { ...emptyDay },
+    friday: { ...emptyDay },
+    saturday: { ...emptyDay },
+    sunday: { ...emptyDay },
+  };
+  const emptyShift = {
+    regular: JSON.parse(JSON.stringify(emptyMealType)),
+    vegetarian: JSON.parse(JSON.stringify(emptyMealType)),
+  };
+  const emptyCycle = {
+    morning: JSON.parse(JSON.stringify(emptyShift)),
+    afternoon: JSON.parse(JSON.stringify(emptyShift)),
+  };
+  
+  return {
+    lastUpdated: new Date().toISOString(),
+    cycle_1_3: JSON.parse(JSON.stringify(emptyCycle)),
+    cycle_2_4: JSON.parse(JSON.stringify(emptyCycle)),
+  };
+}
+
 export async function resetMenuToDefaultAction() {
   try {
-    await saveFullMenu(INITIAL_MENU_DATABASE);
+    const emptyDb = createEmptyMenu();
+    await saveFullMenu(emptyDb);
     revalidatePath('/');
     revalidatePath('/admin');
-    return { success: true, message: 'Đã khôi phục thực đơn về bản gốc ban đầu!' };
+    return { success: true, message: 'Đã làm trống toàn bộ thực đơn!' };
   } catch (error: any) {
     return { success: false, message: error?.message || 'Có lỗi xảy ra' };
   }

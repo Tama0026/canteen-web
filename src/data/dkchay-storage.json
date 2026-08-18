@@ -1,4 +1,11 @@
 {
   "date": "2026-08-18",
-  "registrations": []
+  "registrations": [
+    {
+      "id": "012",
+      "name": "HUY",
+      "isLunch": true,
+      "isDinner": false
+    }
+  ]
 }
