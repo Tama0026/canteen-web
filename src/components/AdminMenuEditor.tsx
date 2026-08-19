@@ -299,7 +299,7 @@ export default function AdminMenuEditor({ initialMenu }: AdminMenuEditorProps) {
 
           <button
             type="submit"
-            className="w-full py-2.5 rounded-lg bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 text-xs font-semibold transition-all cursor-pointer"
+            className="w-full py-2.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold transition-all cursor-pointer shadow-sm shadow-amber-500/20"
           >
             Mở Khóa Quản Trị
           </button>

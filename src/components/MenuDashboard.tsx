@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -105,9 +105,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
     return results;
   }, [searchQuery, initialMenu]);
 
-
-
-  // Render a Single Matrix Table Block (For Table View Mode)
   const renderTableBlock = (
     shift: ShiftKey,
     mealType: MealTypeKey,
@@ -301,9 +298,9 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
 
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
-      {/* 1. Control Toolbar */}
+
       <div className="bg-white dark:bg-slate-900 rounded-2xl border border-slate-200 dark:border-slate-800 p-4 space-y-3.5 shadow-sm">
-        {/* Top Line */}
+
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 pb-3 border-b border-slate-100 dark:border-slate-800">
           <div className="flex items-center gap-3">
             <span className="text-xs font-black text-slate-900 dark:text-white uppercase tracking-wider flex items-center gap-1.5">
@@ -311,16 +308,15 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               THỰC ĐƠN TUẦN {selectedWeek} (CHU KỲ {cycleText})
             </span>
             <span className="text-slate-300 dark:text-slate-700">•</span>
-            <span className="text-xs text-slate-500 dark:text-slate-400 font-medium">
+            <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800">
               Hôm nay: {dateInfo.formattedDate}
             </span>
           </div>
         </div>
 
-        {/* Row 2: Selectors & Filters */}
         <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
           <div className="flex flex-wrap items-center gap-3">
-            {/* Week Selector */}
+
             <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               {([1, 2, 3, 4] as WeekNumber[]).map((w) => {
                 const isCurrentWeek = w === dateInfo.weekNumber;
@@ -343,7 +339,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               )})}
             </div>
 
-            {/* Shift Filter: CA SÁNG / CA CHIỀU */}
             <div className="flex items-center p-0.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700">
               <button
                 onClick={() => setViewFilter('all')}
@@ -375,7 +370,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
             </div>
           </div>
 
-          {/* Quick Search */}
           <div className="relative w-full sm:w-64">
             <input
               type="text"
@@ -389,7 +383,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
         </div>
       </div>
 
-      {/* Search Results Drawer */}
       {searchQuery && searchResults && (
         <div className="p-4 rounded-2xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 shadow-sm space-y-3">
           <div className="flex items-center justify-between">
@@ -418,7 +411,6 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
           )}
         </div>
       )}
-
 
         <div className="space-y-8">
           {(viewFilter === 'all' || viewFilter === 'morning') && (

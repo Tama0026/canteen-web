@@ -97,6 +97,7 @@ export default function DkChay() {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [hiddenNames, setHiddenNames] = useState<string[]>([]);
+  const [regHistory, setRegHistory] = useState<{id: string, name: string}[]>([]);
 
   const loadData = async () => {
     setIsRefreshing(true);
@@ -122,6 +123,10 @@ export default function DkChay() {
     if (hidNames) {
       try { setHiddenNames(JSON.parse(hidNames)); } catch(e) {}
     }
+    const historyStr = localStorage.getItem('canteen_reg_history');
+    if (historyStr) {
+      try { setRegHistory(JSON.parse(historyStr)); } catch(e) {}
+    }
   }, []);
 
   useEffect(() => {
@@ -132,10 +137,8 @@ export default function DkChay() {
   }, [hiddenIds, hiddenNames, isLoaded]);
 
   const openAddModal = () => {
-    const savedId = typeof window !== 'undefined' ? (localStorage.getItem('canteen_last_user_id') || '') : '';
-    const savedName = typeof window !== 'undefined' ? (localStorage.getItem('canteen_last_user_name') || '') : '';
-    setIdInput(savedId);
-    setNameInput(savedName);
+    setIdInput('');
+    setNameInput('');
     setIsLunch(false);
     setIsDinner(false);
     setEditingIndex(null);
@@ -176,10 +179,21 @@ export default function DkChay() {
 
     const res = await upsertDkChayAction(newReg);
     if (res.success) {
-      // Lưu lại MSNV và Tên vào localStorage để tự động điền các lần sau
+
       if (typeof window !== 'undefined') {
-        localStorage.setItem('canteen_last_user_id', newReg.id);
-        localStorage.setItem('canteen_last_user_name', newReg.name);
+        const historyStr = localStorage.getItem('canteen_reg_history');
+        let history = [];
+        if (historyStr) {
+          try { history = JSON.parse(historyStr); } catch(e) {}
+        }
+        const existingIdx = history.findIndex((h: any) => h.id === newReg.id);
+        if (existingIdx >= 0) {
+          history[existingIdx].name = newReg.name;
+        } else {
+          history.push({ id: newReg.id, name: newReg.name });
+        }
+        localStorage.setItem('canteen_reg_history', JSON.stringify(history));
+        setRegHistory(history);
       }
       setStatusMessage({ type: 'success', text: editingIndex !== null ? 'Sửa thành công' : 'Đăng ký thành công' });
       await loadData();
@@ -333,7 +347,7 @@ export default function DkChay() {
 
 
     
-    const sortedRegistrations = [...registrations];
+    const sortedRegistrations = [...registrations].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     const lunchList = sortedRegistrations.filter(r => r.isLunch);
     const dinnerList = sortedRegistrations.filter(r => r.isDinner);
     
@@ -380,6 +394,15 @@ export default function DkChay() {
     
     saveAs(new Blob([buffer]), fileName);
   };
+
+  const allIdsSet = new Set(registrations.map(r => r.id));
+  regHistory.forEach(h => allIdsSet.add(h.id));
+  const suggestedIds = Array.from(allIdsSet).filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id)).sort((a, b) => Number(a) - Number(b));
+
+  const allNamesSet = new Set(registrations.map(r => r.name));
+  regHistory.forEach(h => allNamesSet.add(h.name));
+  const suggestedNames = Array.from(allNamesSet).filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name)).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="space-y-6 sm:space-y-8 w-full relative">
       {statusMessage && (
@@ -458,7 +481,7 @@ export default function DkChay() {
         </div>
       </div>
 
-      {/* 3 Stats Counters */}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
@@ -575,13 +598,10 @@ export default function DkChay() {
                     className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                     required
                   />
-                  {showIdSuggestions && Array.from(new Set(registrations.map(r => r.id))).filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id)).length > 0 && (
+                  {showIdSuggestions && suggestedIds.length > 0 && (
                     <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl max-h-48 overflow-y-auto z-[60]">
-                      {Array.from(new Set(registrations.map(r => r.id)))
-                        .filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id))
-                        .sort((a, b) => Number(a) - Number(b))
-                        .map(id => (
-                        <div key={id} onClick={() => setIdInput(id)} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors flex justify-between items-center group">
+                      {suggestedIds.map(id => (
+                        <div key={id} onClick={() => { setIdInput(id); const found = registrations.find(r => r.id === id) || regHistory.find(h => h.id === id); if (found) setNameInput(found.name); }} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors flex justify-between items-center group">
                           <span>{id}</span>
                           <button 
                             type="button"
@@ -619,13 +639,10 @@ export default function DkChay() {
                     className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
                     required
                   />
-                  {showNameSuggestions && Array.from(new Set(registrations.map(r => r.name))).filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name)).length > 0 && (
+                  {showNameSuggestions && suggestedNames.length > 0 && (
                     <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl max-h-48 overflow-y-auto z-[60]">
-                      {Array.from(new Set(registrations.map(r => r.name)))
-                        .filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name))
-                        .sort((a, b) => a.localeCompare(b))
-                        .map(name => (
-                        <div key={name} onClick={() => setNameInput(name)} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors uppercase flex justify-between items-center group">
+                      {suggestedNames.map(name => (
+                        <div key={name} onClick={() => { setNameInput(name); const found = registrations.find(r => r.name === name) || regHistory.find(h => h.name === name); if (found && !idInput) setIdInput(found.id); }} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors uppercase flex justify-between items-center group">
                           <span>{name}</span>
                           <button 
                             type="button"
