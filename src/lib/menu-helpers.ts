@@ -1,14 +1,5 @@
 import { DayKey, CycleKey, WeekNumber, DAY_KEYS } from '@/types/menu';
 
-/**
- * Tách món ăn xen kẽ theo tuần.
- * Ví dụ: "Thịt ram/Chiên"
- * - Tuần 1 -> "Thịt ram"
- * - Tuần 3 -> "Thịt chiên" (hoặc "Chiên")
- * Ví dụ: "Trứng chiên/ốp la"
- * - Tuần 2 -> "Trứng chiên"
- * - Tuần 4 -> "Trứng ốp la"
- */
 export function getEffectiveDish(dishStr: string | undefined, weekNumber: WeekNumber): {
   name: string;
   hasAlternating: boolean;
@@ -40,15 +31,15 @@ export function getEffectiveDish(dishStr: string | undefined, weekNumber: WeekNu
     note = `Tuần 1: ${part1} | Tuần 3: ${part2}`;
   } else if (weekNumber === 3) {
     selectedName = part2.toLowerCase().startsWith('thịt') || part2.toLowerCase().startsWith('trứng') || part2.toLowerCase().startsWith('cá') || part2.toLowerCase().startsWith('gà')
-      ? part2 
-      : `${part1.split(' ')[0]} ${part2}`; // ví dụ "Thịt" + "Chiên" = "Thịt Chiên"
+      ? part2
+      : `${part1.split(' ')[0]} ${part2}`;
     note = `Tuần 1: ${part1} | Tuần 3: ${selectedName}`;
   } else if (weekNumber === 2) {
     selectedName = part1;
     note = `Tuần 2: ${part1} | Tuần 4: ${part2}`;
   } else if (weekNumber === 4) {
     selectedName = part2.toLowerCase().startsWith('trứng') || part2.toLowerCase().startsWith('thịt')
-      ? part2 
+      ? part2
       : `${part1.split(' ')[0]} ${part2}`;
     note = `Tuần 2: ${part1} | Tuần 4: ${selectedName}`;
   }
@@ -65,16 +56,10 @@ export function getEffectiveDish(dishStr: string | undefined, weekNumber: WeekNu
   };
 }
 
-/**
- * Xác định chu kỳ từ số tuần: Tuần 1, 3 -> cycle_1_3; Tuần 2, 4 -> cycle_2_4
- */
 export function getCycleForWeek(weekNum: WeekNumber): CycleKey {
   return weekNum === 1 || weekNum === 3 ? 'cycle_1_3' : 'cycle_2_4';
 }
 
-/**
- * Tự động tính toán Thứ trong tuần và Số thứ tự tuần trong tháng hiện tại
- */
 export function getCurrentDateInfo(): {
   dayKey: DayKey;
   dayIndex: number;
@@ -84,9 +69,8 @@ export function getCurrentDateInfo(): {
   formattedDate: string;
 } {
   const now = new Date();
-  const dayIndex = now.getDay(); // 0: CN, 1: T2, 2: T3, ..., 6: T7
+  const dayIndex = now.getDay();
 
-  // Ánh xạ ngày trong tuần (nếu Chủ nhật thì mặc định xem trước Thứ 2)
   let dayKey: DayKey = 'monday';
   if (dayIndex === 2) dayKey = 'tuesday';
   else if (dayIndex === 3) dayKey = 'wednesday';
@@ -105,16 +89,23 @@ export function getCurrentDateInfo(): {
     6: 'Thứ Bảy',
   };
 
-  // Tính tuần thứ mấy trong tháng (1, 2, 3, 4)
-  const dateOfMonth = now.getDate();
-  let weekNumber: WeekNumber = 1;
-  if (dateOfMonth <= 7) weekNumber = 1;
-  else if (dateOfMonth <= 14) weekNumber = 2;
-  else if (dateOfMonth <= 21) weekNumber = 3;
-  else weekNumber = 4;
+  const referenceDate = new Date(2026, 7, 3);
+  referenceDate.setHours(0, 0, 0, 0);
+
+  const currentDayOfWeek = now.getDay() === 0 ? 7 : now.getDay();
+  const currentMonday = new Date(now);
+  currentMonday.setDate(now.getDate() - (currentDayOfWeek - 1));
+  currentMonday.setHours(0, 0, 0, 0);
+
+  const diffTime = currentMonday.getTime() - referenceDate.getTime();
+  const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+  const diffWeeks = Math.floor(diffDays / 7);
+  const calculatedWeek = ((diffWeeks % 4) + 4) % 4 + 1;
+  const weekNumber: WeekNumber = calculatedWeek as WeekNumber;
 
   const cycleKey = getCycleForWeek(weekNumber);
 
+  const dateOfMonth = now.getDate();
   const formattedDate = `Ngày ${dateOfMonth} tháng ${now.getMonth() + 1}, ${now.getFullYear()}`;
 
   return {
@@ -127,9 +118,6 @@ export function getCurrentDateInfo(): {
   };
 }
 
-/**
- * Lấy mã ngày đăng ký (Session Date Key) theo ngày hiện tại (Tự động làm mới vào 00:00 hàng ngày)
- */
 export function getDkChaySessionDate(): { dateKey: string; displayDate: string } {
   const now = new Date();
   const yyyy = now.getFullYear();

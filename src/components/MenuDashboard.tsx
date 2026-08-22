@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
@@ -130,7 +130,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                   {mealTypeLabel}
                 </th>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                   return (
                     <th
                       key={d}
@@ -171,7 +171,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                   const eff = getEffectiveDish(item?.mainDish1, selectedWeek);
                   const hasDish1 = Boolean(eff.name && eff.name.trim());
                   const hasDish2 = Boolean(item?.mainDish2 && item.mainDish2.trim());
-                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                   
                   const shouldMerge = hasAnyMainDish2 && hasDish1 && !hasDish2;
 
@@ -200,7 +200,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                     if (shouldMerge) return null;
 
                     const eff2 = getEffectiveDish(item?.mainDish2, selectedWeek);
-                    const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                    const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                     return (
                       <td
                         key={d}
@@ -217,7 +217,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Xào</td>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                   return (
                     <td
                       key={d}
@@ -233,7 +233,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Canh</td>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                   return (
                     <td
                       key={d}
@@ -249,7 +249,7 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
               <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                 <td className="py-2 px-2 font-semibold border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">Tráng miệng</td>
                 {DAY_KEYS.map((d) => {
-                  const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                  const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                   return (
                     <td
                       key={d}
@@ -262,13 +262,13 @@ export default function MenuDashboard({ initialMenu }: MenuDashboardProps) {
                   );
                 })}
               </tr>
-              {mealType === 'vegetarian' && Number(selectedWeek) === Number(dateInfo.weekNumber) && (
+              {mealType === 'vegetarian' && selectedWeek === dateInfo.weekNumber && (
                 <tr className="hover:bg-slate-50/60 dark:hover:bg-slate-800/40">
                   <td className="py-2 px-2 font-bold text-slate-800 dark:text-slate-200 border-r border-slate-300 dark:border-slate-700 bg-slate-50/30 dark:bg-slate-800/30 align-middle">
                     Đăng Ký
                   </td>
                   {DAY_KEYS.map((d) => {
-                    const isToday = d === dateInfo.dayKey && Number(selectedWeek) === Number(dateInfo.weekNumber);
+                    const isToday = d === dateInfo.dayKey && selectedWeek === dateInfo.weekNumber;
                     return (
                       <td
                         key={d}
