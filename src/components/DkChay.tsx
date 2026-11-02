@@ -99,6 +99,7 @@ export default function DkChay() {
   const [showNameSuggestions, setShowNameSuggestions] = useState(false);
   const [hiddenIds, setHiddenIds] = useState<string[]>([]);
   const [hiddenNames, setHiddenNames] = useState<string[]>([]);
+  const [regHistory, setRegHistory] = useState<{id: string, name: string}[]>([]);
 
   const loadData = async () => {
     setIsRefreshing(true);
@@ -124,6 +125,10 @@ export default function DkChay() {
     if (hidNames) {
       try { setHiddenNames(JSON.parse(hidNames)); } catch(e) {}
     }
+    const historyStr = localStorage.getItem('canteen_reg_history');
+    if (historyStr) {
+      try { setRegHistory(JSON.parse(historyStr)); } catch(e) {}
+    }
   }, []);
 
   useEffect(() => {
@@ -134,10 +139,8 @@ export default function DkChay() {
   }, [hiddenIds, hiddenNames, isLoaded]);
 
   const openAddModal = () => {
-    const savedId = typeof window !== 'undefined' ? (localStorage.getItem('canteen_last_user_id') || '') : '';
-    const savedName = typeof window !== 'undefined' ? (localStorage.getItem('canteen_last_user_name') || '') : '';
-    setIdInput(savedId);
-    setNameInput(savedName);
+    setIdInput('');
+    setNameInput('');
     setIsLunch(false);
     setIsDinner(false);
     setEditingIndex(null);
@@ -199,10 +202,24 @@ export default function DkChay() {
       text: wasEditing ? 'Sửa thành công' : 'Đăng ký thành công' 
     });
 
-    // 4. Lưu lại MSNV và Tên vào localStorage
+    // 4. Lưu lại MSNV, Tên và lịch sử vào localStorage
     if (typeof window !== 'undefined') {
       localStorage.setItem('canteen_last_user_id', newReg.id);
       localStorage.setItem('canteen_last_user_name', newReg.name);
+
+      const historyStr = localStorage.getItem('canteen_reg_history');
+      let history = [];
+      if (historyStr) {
+        try { history = JSON.parse(historyStr); } catch(e) {}
+      }
+      const existingIdx = history.findIndex((h: any) => h.id === newReg.id);
+      if (existingIdx >= 0) {
+        history[existingIdx].name = newReg.name;
+      } else {
+        history.push({ id: newReg.id, name: newReg.name });
+      }
+      localStorage.setItem('canteen_reg_history', JSON.stringify(history));
+      setRegHistory(history);
     }
 
     // 5. Gửi request lưu dữ liệu ngầm lên server
@@ -381,7 +398,7 @@ export default function DkChay() {
 
 
     
-    const sortedRegistrations = [...registrations];
+    const sortedRegistrations = [...registrations].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
     const lunchList = sortedRegistrations.filter(r => r.isLunch);
     const dinnerList = sortedRegistrations.filter(r => r.isDinner);
     
@@ -428,6 +445,15 @@ export default function DkChay() {
     
     saveAs(new Blob([buffer]), fileName);
   };
+
+  const allIdsSet = new Set(registrations.map(r => r.id));
+  regHistory.forEach(h => allIdsSet.add(h.id));
+  const suggestedIds = Array.from(allIdsSet).filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id)).sort((a, b) => Number(a) - Number(b));
+
+  const allNamesSet = new Set(registrations.map(r => r.name));
+  regHistory.forEach(h => allNamesSet.add(h.name));
+  const suggestedNames = Array.from(allNamesSet).filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name)).sort((a, b) => a.localeCompare(b));
+
   return (
     <div className="space-y-6 sm:space-y-8 w-full relative">
       
@@ -444,7 +470,6 @@ export default function DkChay() {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             <h1 className="text-base sm:text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase flex items-center gap-2">
-              <Leaf className="w-4 h-4 text-emerald-600" />
               <span>Danh Sách Đăng Ký Cơm Chay</span>
             </h1>
             <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300 border border-emerald-200 dark:border-emerald-800 flex items-center gap-1.5">
@@ -457,7 +482,7 @@ export default function DkChay() {
         <div className="flex flex-wrap items-center gap-2">
           <button 
             onClick={openAddModal}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-900 hover:bg-slate-800 text-white dark:bg-white dark:text-slate-900 dark:hover:bg-slate-100 text-xs font-semibold rounded-lg transition-colors cursor-pointer"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-blue-900/20"
           >
             <Plus className="w-3.5 h-3.5" />
             <span>Thêm mới</span>
@@ -465,7 +490,7 @@ export default function DkChay() {
           {selectedIndices.length === 1 && (
             <button 
               onClick={() => handleStartEdit(selectedIndices[0])}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-500 hover:bg-amber-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-amber-900/20"
             >
               <Edit2 className="w-3.5 h-3.5" />
               <span>Chỉnh sửa</span>
@@ -474,7 +499,7 @@ export default function DkChay() {
           {selectedIndices.length > 0 && (
             <button 
               onClick={() => setIsDeleteModalOpen(true)}
-              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-50 dark:bg-red-950/40 hover:bg-red-100 text-red-600 dark:text-red-400 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-red-200 dark:border-red-900/60"
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-red-500 hover:bg-red-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-red-900/20"
             >
               <Trash2 className="w-3.5 h-3.5" />
               <span>Xóa</span>
@@ -483,10 +508,10 @@ export default function DkChay() {
           <button 
             onClick={loadData}
             disabled={isRefreshing}
-            className="flex items-center gap-1.5 px-3 py-1.5 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 text-slate-700 dark:text-slate-300 text-xs font-semibold rounded-lg transition-colors cursor-pointer border border-slate-200 dark:border-slate-700"
+            className="flex items-center gap-1.5 px-3 py-1.5 bg-sky-500 hover:bg-sky-600 text-white text-xs font-semibold rounded-lg transition-colors cursor-pointer shadow-sm shadow-sky-900/20"
             title="Tải lại danh sách đăng ký mới nhất từ server"
           >
-            <RefreshCw className={`w-3.5 h-3.5 text-slate-500 ${isRefreshing ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`w-3.5 h-3.5 text-white ${isRefreshing ? 'animate-spin' : ''}`} />
             <span>Làm mới</span>
           </button>
           <button 
@@ -500,7 +525,7 @@ export default function DkChay() {
         </div>
       </div>
 
-      {/* 3 Stats Counters */}
+
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <div className="p-4 rounded-xl bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 flex items-center justify-between">
           <div>
@@ -621,13 +646,10 @@ export default function DkChay() {
                     className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     required
                   />
-                  {showIdSuggestions && Array.from(new Set(registrations.map(r => r.id))).filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id)).length > 0 && (
+                  {showIdSuggestions && suggestedIds.length > 0 && (
                     <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl max-h-48 overflow-y-auto z-[60]">
-                      {Array.from(new Set(registrations.map(r => r.id)))
-                        .filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id))
-                        .sort((a, b) => Number(a) - Number(b))
-                        .map(id => (
-                        <div key={id} onClick={() => setIdInput(id)} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors flex justify-between items-center group">
+                      {suggestedIds.map(id => (
+                        <div key={id} onClick={() => { setIdInput(id); const found = registrations.find(r => r.id === id) || regHistory.find(h => h.id === id); if (found) setNameInput(found.name); }} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors flex justify-between items-center group">
                           <span>{id}</span>
                           <button 
                             type="button"
@@ -667,13 +689,10 @@ export default function DkChay() {
                     className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     required
                   />
-                  {showNameSuggestions && Array.from(new Set(registrations.map(r => r.name))).filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name)).length > 0 && (
+                  {showNameSuggestions && suggestedNames.length > 0 && (
                     <div className="absolute top-[calc(100%+4px)] left-0 w-full bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-lg rounded-xl max-h-48 overflow-y-auto z-[60]">
-                      {Array.from(new Set(registrations.map(r => r.name)))
-                        .filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name))
-                        .sort((a, b) => a.localeCompare(b))
-                        .map(name => (
-                        <div key={name} onClick={() => setNameInput(name)} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors uppercase flex justify-between items-center group">
+                      {suggestedNames.map(name => (
+                        <div key={name} onClick={() => { setNameInput(name); const found = registrations.find(r => r.name === name) || regHistory.find(h => h.name === name); if (found && !idInput) setIdInput(found.id); }} className="px-4 py-2.5 hover:bg-slate-100 dark:hover:bg-slate-700 cursor-pointer text-slate-700 dark:text-slate-300 transition-colors uppercase flex justify-between items-center group">
                           <span>{name}</span>
                           <button 
                             type="button"
