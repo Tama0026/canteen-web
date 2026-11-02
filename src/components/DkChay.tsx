@@ -55,17 +55,17 @@ const ToastNotification = ({ message, type, onClose }: { message: string; type: 
   }, [onClose]);
 
   return (
-    <div className={`fixed top-4 right-4 z-50 flex flex-col overflow-hidden rounded-xl shadow-xl border ${
+    <div className={`fixed top-5 right-5 z-[9999] pointer-events-auto flex flex-col overflow-hidden rounded-xl shadow-2xl border ${
       type === 'success' ? 'bg-white dark:bg-slate-900 border-emerald-500' : 'bg-white dark:bg-slate-900 border-rose-500'
-    } min-w-[280px]`}>
-      <div className="flex items-center gap-2 p-3">
+    } min-w-[300px]`}>
+      <div className="flex items-center gap-2.5 p-3.5">
         {type === 'success' ? (
           <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
         ) : (
           <AlertCircle className="w-5 h-5 text-rose-600 shrink-0" />
         )}
         <span className="text-xs font-bold text-slate-900 dark:text-white flex-1">{message}</span>
-        <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+        <button onClick={onClose} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-800 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 cursor-pointer">
           <X className="w-4 h-4" />
         </button>
       </div>
@@ -83,6 +83,8 @@ export default function DkChay() {
   const [registrations, setRegistrations] = useState<Registration[]>([]);
   const [isLoaded, setIsLoaded] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [idInput, setIdInput] = useState('');
@@ -144,6 +146,7 @@ export default function DkChay() {
 
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
     if (!idInput || !nameInput || (!isLunch && !isDinner)) return;
 
     const newReg = {
@@ -174,21 +177,53 @@ export default function DkChay() {
       }
     }
 
-    const res = await upsertDkChayAction(newReg);
-    if (res.success) {
-      // Lưu lại MSNV và Tên vào localStorage để tự động điền các lần sau
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('canteen_last_user_id', newReg.id);
-        localStorage.setItem('canteen_last_user_name', newReg.name);
-      }
-      setStatusMessage({ type: 'success', text: editingIndex !== null ? 'Sửa thành công' : 'Đăng ký thành công' });
-      await loadData();
-    } else {
-      setStatusMessage({ type: 'error', text: 'Lỗi khi lưu dữ liệu' });
-    }
-    
+    // 1. ĐÓNG MODAL NGAY LẬP TỨC để trải nghiệm mượt mà, không bị chờ đợi
     setIsModalOpen(false);
+    const wasEditing = editingIndex !== null;
+    const prevRegistrations = [...registrations];
+    const prevEditingIndex = editingIndex;
     setEditingIndex(null);
+
+    // 2. Cập nhật giao diện Optimistic UI ngay lập tức
+    setRegistrations(prev => {
+      if (prevEditingIndex !== null) {
+        return prev.map((item, idx) => (idx === prevEditingIndex ? newReg : item));
+      } else {
+        return [...prev, newReg];
+      }
+    });
+
+    // 3. Hiển thị thông báo thành công tức thì ở tầng cao nhất
+    setStatusMessage({ 
+      type: 'success', 
+      text: wasEditing ? 'Sửa thành công' : 'Đăng ký thành công' 
+    });
+
+    // 4. Lưu lại MSNV và Tên vào localStorage
+    if (typeof window !== 'undefined') {
+      localStorage.setItem('canteen_last_user_id', newReg.id);
+      localStorage.setItem('canteen_last_user_name', newReg.name);
+    }
+
+    // 5. Gửi request lưu dữ liệu ngầm lên server
+    setIsSubmitting(true);
+    try {
+      const res = await upsertDkChayAction(newReg);
+      if (res.success) {
+        // Đồng bộ dữ liệu mới nhất ngầm từ server
+        loadData();
+      } else {
+        // Hoàn tác nếu có lỗi từ server
+        setRegistrations(prevRegistrations);
+        setStatusMessage({ type: 'error', text: res.message || 'Lỗi khi lưu dữ liệu' });
+      }
+    } catch (e) {
+      console.error('Lỗi khi lưu dữ liệu:', e);
+      setRegistrations(prevRegistrations);
+      setStatusMessage({ type: 'error', text: 'Đã có lỗi xảy ra khi lưu dữ liệu' });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleStartEdit = (index: number) => {
@@ -202,16 +237,29 @@ export default function DkChay() {
   };
 
   const handleDeleteSelected = async () => {
-    if (selectedIndices.length > 0) {
-      const idsToDelete = selectedIndices.map(i => registrations[i]?.id).filter(Boolean);
+    if (selectedIndices.length === 0 || isDeleting) return;
+    const idsToDelete = selectedIndices.map(i => registrations[i]?.id).filter(Boolean);
+    setIsDeleting(true);
+    try {
+      // Optimistic update
+      setRegistrations(prev => prev.filter((_, i) => !selectedIndices.includes(i)));
+      setSelectedIndices([]);
+      setIsDeleteModalOpen(false);
+
       const res = await deleteDkChayAction(idsToDelete);
       if (res.success) {
         setStatusMessage({ type: 'success', text: 'Xóa thành công' });
-        setSelectedIndices([]);
-        await loadData();
+        loadData();
       } else {
         setStatusMessage({ type: 'error', text: 'Xóa không thành công' });
+        loadData();
       }
+    } catch (e) {
+      console.error('Lỗi khi xóa:', e);
+      setStatusMessage({ type: 'error', text: 'Lỗi khi xóa dữ liệu' });
+      loadData();
+    } finally {
+      setIsDeleting(false);
     }
   };
 
@@ -382,13 +430,6 @@ export default function DkChay() {
   };
   return (
     <div className="space-y-6 sm:space-y-8 w-full relative">
-      {statusMessage && (
-        <ToastNotification 
-          message={statusMessage.text} 
-          type={statusMessage.type} 
-          onClose={() => setStatusMessage(null)} 
-        />
-      )}
       
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 pb-4 border-b border-slate-200 dark:border-slate-800">
         <div>
@@ -552,8 +593,10 @@ export default function DkChay() {
                 {editingIndex !== null ? 'SỬA THÔNG TIN' : 'THÊM NGƯỜI ĐĂNG KÝ'}
               </h3>
               <button 
-                onClick={() => setIsModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                type="button"
+                onClick={() => !isSubmitting && setIsModalOpen(false)}
+                disabled={isSubmitting}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-lg cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -565,6 +608,7 @@ export default function DkChay() {
                   <input 
                     type="text" 
                     value={idInput}
+                    disabled={isSubmitting}
                     onFocus={() => setShowIdSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowIdSuggestions(false), 200)}
                     onChange={(e) => {
@@ -573,7 +617,8 @@ export default function DkChay() {
                         setIdInput(val);
                       }
                     }}
-                    className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                    placeholder="Nhập mã số nhân viên..."
+                    className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     required
                   />
                   {showIdSuggestions && Array.from(new Set(registrations.map(r => r.id))).filter(id => id.includes(idInput) && id !== idInput && !hiddenIds.includes(id)).length > 0 && (
@@ -593,7 +638,7 @@ export default function DkChay() {
                               const inputEl = e.currentTarget.closest('.relative')?.querySelector('input');
                               if (inputEl) inputEl.focus();
                             }} 
-                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-all"
+                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                             title="Xóa gợi ý này"
                           >
                             <X className="w-4 h-4" />
@@ -609,6 +654,7 @@ export default function DkChay() {
                   <input 
                     type="text" 
                     value={nameInput}
+                    disabled={isSubmitting}
                     onFocus={() => setShowNameSuggestions(true)}
                     onBlur={() => setTimeout(() => setShowNameSuggestions(false), 200)}
                     onChange={(e) => {
@@ -617,7 +663,8 @@ export default function DkChay() {
                         setNameInput(val);
                       }
                     }}
-                    className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all"
+                    placeholder="Nhập họ và tên..."
+                    className="uppercase w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-800 border border-slate-300 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
                     required
                   />
                   {showNameSuggestions && Array.from(new Set(registrations.map(r => r.name))).filter(name => name.includes(nameInput) && name !== nameInput && !hiddenNames.includes(name)).length > 0 && (
@@ -636,7 +683,7 @@ export default function DkChay() {
                               const inputEl = e.currentTarget.closest('.relative')?.querySelector('input');
                               if (inputEl) inputEl.focus();
                             }} 
-                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-all"
+                            className="p-1 text-slate-300 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-900/30 rounded opacity-0 group-hover:opacity-100 transition-all cursor-pointer"
                             title="Xóa gợi ý này"
                           >
                             <X className="w-4 h-4" />
@@ -650,21 +697,23 @@ export default function DkChay() {
                 <div>
                   <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2 uppercase">CHỌN CA ĂN</label>
                   <div className="flex gap-6 mt-1">
-                    <label className="flex items-center gap-2.5 cursor-pointer">
+                    <label className={`flex items-center gap-2.5 ${isSubmitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                       <input 
                         type="checkbox" 
                         checked={isLunch}
+                        disabled={isSubmitting}
                         onChange={(e) => setIsLunch(e.target.checked)}
-                        className="w-4.5 h-4.5 text-orange-500 focus:ring-orange-500 rounded border-slate-300"
+                        className="w-4.5 h-4.5 text-orange-500 focus:ring-orange-500 rounded border-slate-300 cursor-pointer disabled:cursor-not-allowed"
                       />
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">CA SÁNG</span>
                     </label>
-                    <label className="flex items-center gap-2.5 cursor-pointer">
+                    <label className={`flex items-center gap-2.5 ${isSubmitting ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'}`}>
                       <input 
                         type="checkbox" 
                         checked={isDinner}
+                        disabled={isSubmitting}
                         onChange={(e) => setIsDinner(e.target.checked)}
-                        className="w-4.5 h-4.5 text-indigo-500 focus:ring-indigo-500 rounded border-slate-300"
+                        className="w-4.5 h-4.5 text-indigo-500 focus:ring-indigo-500 rounded border-slate-300 cursor-pointer disabled:cursor-not-allowed"
                       />
                       <span className="text-sm font-medium text-slate-700 dark:text-slate-300 uppercase">CA CHIỀU</span>
                     </label>
@@ -675,16 +724,30 @@ export default function DkChay() {
                   <button 
                     type="button"
                     onClick={() => setIsModalOpen(false)}
-                    className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors uppercase"
+                    disabled={isSubmitting}
+                    className="flex-1 py-2.5 px-4 bg-slate-100 hover:bg-slate-200 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-300 rounded-xl font-medium transition-colors uppercase cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     HỦY
                   </button>
                   <button 
                     type="submit"
-                    disabled={!idInput || !nameInput || (!isLunch && !isDinner) || (editingIndex !== null && registrations[editingIndex] && registrations[editingIndex].id === idInput && registrations[editingIndex].name === nameInput.toUpperCase() && registrations[editingIndex].isLunch === isLunch && registrations[editingIndex].isDinner === isDinner)}
-                    className="flex-[2] py-2.5 px-4 bg-emerald-500 hover:bg-emerald-600 disabled:bg-slate-400 text-white rounded-xl font-medium transition-colors shadow-sm"
+                    disabled={isSubmitting || !idInput || !nameInput || (!isLunch && !isDinner) || (editingIndex !== null && registrations[editingIndex] && registrations[editingIndex].id === idInput && registrations[editingIndex].name === nameInput.toUpperCase() && registrations[editingIndex].isLunch === isLunch && registrations[editingIndex].isDinner === isDinner)}
+                    className={`flex-[2] py-2.5 px-4 rounded-xl font-medium transition-all shadow-sm flex items-center justify-center gap-2 text-white ${
+                      isSubmitting
+                        ? 'bg-emerald-600 cursor-wait opacity-90'
+                        : (!idInput || !nameInput || (!isLunch && !isDinner) || (editingIndex !== null && registrations[editingIndex] && registrations[editingIndex].id === idInput && registrations[editingIndex].name === nameInput.toUpperCase() && registrations[editingIndex].isLunch === isLunch && registrations[editingIndex].isDinner === isDinner))
+                          ? 'bg-slate-300 dark:bg-slate-700 text-slate-500 dark:text-slate-400 cursor-not-allowed'
+                          : 'bg-emerald-600 hover:bg-emerald-700 active:scale-[0.99] cursor-pointer'
+                    }`}
                   >
-                    {editingIndex !== null ? 'LƯU' : 'THÊM'}
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                        <span>{editingIndex !== null ? 'ĐANG LƯU...' : 'ĐANG ĐĂNG KÝ...'}</span>
+                      </>
+                    ) : (
+                      <span>{editingIndex !== null ? 'LƯU THAY ĐỔI' : 'ĐĂNG KÝ'}</span>
+                    )}
                   </button>
                 </div>
               </form>
@@ -702,8 +765,10 @@ export default function DkChay() {
                 XÁC NHẬN XÓA
               </h3>
               <button 
-                onClick={() => setIsDeleteModalOpen(false)}
-                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
+                type="button"
+                onClick={() => !isDeleting && setIsDeleteModalOpen(false)}
+                disabled={isDeleting}
+                className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors p-1 rounded-lg cursor-pointer disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <X className="w-5 h-5" />
               </button>
@@ -714,24 +779,44 @@ export default function DkChay() {
               </p>
               <div className="flex items-center justify-end gap-3 mt-2">
                 <button 
+                  type="button"
                   onClick={() => setIsDeleteModalOpen(false)}
-                  className="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors"
+                  disabled={isDeleting}
+                  className="px-5 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-slate-800 hover:bg-slate-200 dark:hover:bg-slate-700 rounded-xl transition-colors cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                   HỦY
                 </button>
                 <button 
-                  onClick={() => {
-                    handleDeleteSelected();
-                    setIsDeleteModalOpen(false);
-                  }}
-                  className="px-5 py-2.5 text-sm font-medium text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors shadow-sm shadow-red-500/20"
+                  type="button"
+                  onClick={handleDeleteSelected}
+                  disabled={isDeleting}
+                  className={`px-5 py-2.5 text-sm font-medium text-white rounded-xl transition-colors shadow-sm shadow-red-500/20 flex items-center gap-2 ${
+                    isDeleting 
+                      ? 'bg-red-600 cursor-wait opacity-90' 
+                      : 'bg-red-500 hover:bg-red-600 active:scale-[0.99] cursor-pointer'
+                  }`}
                 >
-                  XÓA
+                  {isDeleting ? (
+                    <>
+                      <RefreshCw className="w-4 h-4 animate-spin shrink-0" />
+                      <span>ĐANG XÓA...</span>
+                    </>
+                  ) : (
+                    <span>XÓA</span>
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
+      )}
+
+      {statusMessage && (
+        <ToastNotification 
+          message={statusMessage.text} 
+          type={statusMessage.type} 
+          onClose={() => setStatusMessage(null)} 
+        />
       )}
 
     </div>

@@ -57,7 +57,10 @@ function getSql(): NeonQueryFunction<false, false> | null {
   }
 }
 
+let isSchemaInitialized = false;
+
 export async function initDatabaseSchema() {
+  if (isSchemaInitialized) return;
   const sql = getSql();
   if (!sql) return;
 
@@ -99,6 +102,7 @@ export async function initDatabaseSchema() {
       console.log('🌱 Đang nạp dữ liệu menu ban đầu vào Neon Postgres...');
       await seedDatabaseFromInitial();
     }
+    isSchemaInitialized = true;
   } catch (error) {
     console.error('Lỗi khi kiểm tra / tạo schema Neon DB:', error);
   }
